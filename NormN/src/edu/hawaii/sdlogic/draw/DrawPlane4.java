@@ -54,7 +54,8 @@ public class DrawPlane4 extends DrawPlane {
 			// draw collaboration links
 			drawLinks(actor, left1, 0, x, y, rgb);
 
-			drawExchange(actor, left2, 0, x, y, rgb);
+			drawTightLinks(actor, left2, 0, x, y, rgb);
+			// drawExchange(actor, left2, 0, x, y, rgb);
 		}
 
 		Canvas.forceRepaint();

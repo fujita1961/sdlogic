@@ -2,6 +2,7 @@ package edu.hawaii.sdlogic.exchange;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +18,12 @@ import edu.hawaii.sdlogic.output.CooperativeCalculateOutput;
  *
  */
 public class SimpleExchange implements Exchange {
+	protected boolean memorized = false;
+
+	public SimpleExchange() {
+		memorized = false;
+	}
+
 	/**
 	 * actors are categorized into satisfied and poor actors.
 	 * @param satisfiedActors
@@ -72,7 +79,7 @@ public class SimpleExchange implements Exchange {
 		double capability = otr.getEffort() * otr.getSkill();
 		OperantResource collaboOtr = actor.getOperantResource(Term.COLLABORATING);
 
-		if(Env.outputs[0] instanceof CooperativeCalculateOutput) {
+		if(Env.output instanceof CooperativeCalculateOutput) {
 			for(int i = 0; i < Env.friends; i++) {
 				Actor friend = actor.getFriend(i);
 				if(friend != null) {
@@ -119,7 +126,6 @@ public class SimpleExchange implements Exchange {
 		// System.out.println(poorActors.size());
 
 		double[] outputs = new double[Env.types];
-		double liveCondition = Env.liveCondition * Env.types;
 
 		// List variables for learning
 		List<String> inc = null;
@@ -136,8 +142,17 @@ public class SimpleExchange implements Exchange {
 		}
 
 		double[] partnerOutputs = new double[Env.types];
+		int[] exchangerIndex = null;
+		if(memorized) {
+			exchangerIndex = new int[Env.types];
+		}
 
-		for(Actor actor: Env.actorList) {
+		int size = Env.actorList.size();
+		int bias = Env.rand.nextInt(size);
+
+		for(int ii = 0; ii < size; ii++) {
+			Actor actor = Env.actorList.get((ii + bias) % size);
+
 			if(Env.learnFlag) {
 				inc.clear();
 				dec.clear();
@@ -170,6 +185,14 @@ public class SimpleExchange implements Exchange {
 				// exchange capability with collaboration
 				double exchangeCapability = calculateExchangeCapability(actor);
 
+				if(memorized) {
+					for(int i = 0; i < Env.types; i++) {
+						exchangerIndex[i] = 0;
+						// tentative;
+						// actor.getExchangers()[i].clear();
+					}
+				}
+
 				// search exchanging partners
 				for(int i = 0; i < Env.searchIteration; i++) {
 
@@ -190,8 +213,33 @@ public class SimpleExchange implements Exchange {
 					if(extras[minIndex].isEmpty()) break;
 
 					// pick up a candidate of exchanging parner.
-					int index = Env.rand.nextInt(extras[minIndex].size());
-					Actor partner = extras[minIndex].get(index);
+					Actor partner = null;
+					LinkedList<Actor> exchangers = null;
+					if(memorized) {
+						exchangers = actor.getExchangers()[minIndex];
+
+						try {
+							partner = exchangers.get(exchangerIndex[minIndex]);
+							if(extras[minIndex].contains(partner)) {
+								exchangerIndex[minIndex]++;
+							} else {
+								exchangers.remove(partner);
+								partner = null;
+							}
+						} catch (IndexOutOfBoundsException e) {
+							partner = null;
+						}
+					}
+
+					if(partner == null) {
+						// pick up a candidate of exchanging parner.
+						int index = Env.rand.nextInt(extras[minIndex].size());
+						partner = extras[minIndex].get(index);
+						if(memorized && !exchangers.contains(partner)) {
+							exchangers.addFirst(partner);
+							exchangerIndex[minIndex]++;
+						}
+					}
 
 					double distance = actor.distance(partner);
 
@@ -205,16 +253,29 @@ public class SimpleExchange implements Exchange {
 						}
 
 						double sum = 0;
+						double minus = 0;
 
 						for(int k = 0; k < Env.types; k++) {
 							partnerOutputs[k] = partner.getOperantResource(Env.typeNames[k]).getOutput();
-							sum += partnerOutputs[k];
+							if(Env.exchangeRate > 1.0) {
+								double diff = partnerOutputs[k] - Env.liveCondition;
+								if(diff < 0) {
+									sum += diff * actor.getExchangeRate();
+									minus += diff * actor.getExchangeRate();
+								} else {
+									sum += diff;
+								}
+							} else {
+								sum += partnerOutputs[k] - Env.liveCondition;
+							}
 						}
 
 						// partner must have enough resources.
-						if(sum > liveCondition) {
+						if(sum > 0) {
+							double minus0 = minus;
 							for(int k = 0; k < Env.types; k++) {
-								if(partnerOutputs[k] >= Env.liveCondition) {
+								double plus = partnerOutputs[k] - Env.liveCondition;
+								if(plus > 0) {
 									if(Env.learnFlag) {
 										incPartner.add(Env.typeNames[k]);
 									}
@@ -225,8 +286,22 @@ public class SimpleExchange implements Exchange {
 									}
 								}
 
-								// set the partner's output just to the living condition.
-								partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+								if(Env.exchangeRate > 1.0) {
+									if(plus > 0) {
+										if(minus0 + plus >= 0) {
+											partner.getOperantResource(Env.typeNames[k]).addOutput(minus0);
+											minus0 = 0;
+										} else {
+											partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+											minus0 += plus;
+										}
+									} else {
+										partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+									}
+								} else {
+									// set the partner's output just to the living condition.
+									partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+								}
 							}
 
 							// partner actrr becomes to satisfy the living condition.
@@ -242,7 +317,22 @@ public class SimpleExchange implements Exchange {
 							// add exchanging margin to the actor's output
 							boolean satisfy = true;
 							for(int k = 0; k < Env.types; k++) {
-								outputs[k] += partnerOutputs[k] - Env.liveCondition;
+								double plus = partnerOutputs[k] - Env.liveCondition;
+								if(Env.exchangeRate > 1.0) {
+									if(plus > 0) {
+										if(minus + plus >= 0) {
+											outputs[k] -= minus;
+											minus = 0;
+										} else {
+											outputs[k] += plus;
+											minus += plus;
+										}
+									} else {
+										outputs[k] += plus;
+									}
+								} else {
+									outputs[k] += plus;
+								}
 								if(outputs[k] < Env.liveCondition) {
 									satisfy = false;
 								}
@@ -276,6 +366,18 @@ public class SimpleExchange implements Exchange {
 						}
 					} else {
 						break;
+					}
+				}
+
+				if(memorized) {
+					for(int i = 0; i < Env.types; i++) {
+						LinkedList<Actor> exchangers = actor.getExchangers()[i];
+						int diff = exchangers.size() - exchangerIndex[i];
+						if(diff > 0) {
+							for(int j = 0; j < diff; j++) {
+								exchangers.removeLast();
+							}
+						}
 					}
 				}
 

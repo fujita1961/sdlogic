@@ -100,6 +100,10 @@ public class Env {
 	 */
 	public static boolean enableCollaborating = false;
 
+	/**
+	 * share rate for share cooperative mode
+	 */
+	public static double shareRate = 0;
 
 	// land fertility
 
@@ -167,6 +171,11 @@ public class Env {
 	// exchange parameters
 
 	/**
+	 * exchange rate
+	 */
+	public static double exchangeRate = 0;
+
+	/**
 	 * the limit of the itereation number for finding exchange partners
 	 */
 	public static int searchIteration = 50;
@@ -228,7 +237,7 @@ public class Env {
 	/**
 	 * specify output calculation functions.
 	 */
-	public static CalculateOutput[] outputs;
+	public static CalculateOutput output;
 
 
 	/**
@@ -292,6 +301,37 @@ public class Env {
 	public static int drawInterval = 1;
 
 	/**
+	 * Draw Map
+	 */
+	public static boolean drawMap = false;
+
+	/**
+	 * Draw Links
+	 */
+	public static boolean drawLinks = false;
+
+	/**
+	 * Draw TightLinks
+	 */
+	public static boolean drawTightLinks = false;
+
+	/**
+	 * Draw TightLinks
+	 */
+	public static boolean drawExchange = false;
+
+	/**
+	 * Draw Relation
+	 */
+	public static boolean drawRelation = false;
+
+	/**
+	 * Draw Relation Density
+	 */
+	public static boolean drawRelationDensity = false;
+
+
+	/**
 	 * interval for animationGIF
 	 */
 	public static int animationGIFInterval = 20;
@@ -310,6 +350,11 @@ public class Env {
 	 * print skill levels for each role
 	 */
 	public static boolean printSkillLevelsFlag = false;
+
+	/**
+	 * print exchange links
+	 */
+	public static boolean printExchangeLinksFlag = false;
 
 	/**
 	 * print statistics

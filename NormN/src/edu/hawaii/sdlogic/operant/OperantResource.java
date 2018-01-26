@@ -9,27 +9,32 @@ public class OperantResource {
 	/**
 	 * resource name
 	 */
-	public String name;
+	private String name;
 
 	/**
 	 * effort value
 	 */
-	public double effort;
+	private double effort;
 
 	/**
 	 * skill level
 	 */
-	public double skill = 1.0;
+	private double skill = 1.0;
 
 	/**
 	 * output in a period
 	 */
-	public double output;
+	private double output;
 
 	/**
 	 * output before exchange
 	 */
-	public double output0;
+	private double output0;
+
+	/**
+	 * share for collaboration
+	 */
+	private double share;
 
 	/**
 	 * operant resource type
@@ -72,6 +77,10 @@ public class OperantResource {
 		this.output = output;
 	}
 
+	public void addOutput(double output) {
+		this.output += output;
+	}
+
 	public double getOutput0() {
 		return output0;
 	}
@@ -80,11 +89,27 @@ public class OperantResource {
 		this.output0 = output;
 	}
 
+	public void addOutput0(double output) {
+		this.output0 += output;
+	}
+
 	public int getType() {
 		return type;
 	}
 
 	public void setType(int type) {
 		this.type = type;
+	}
+
+	public double getShare() {
+		return share;
+	}
+
+	public void setShare(double share) {
+		this.share = share;
+	}
+
+	public void addShare(double share) {
+		this.share += share;
 	}
 }

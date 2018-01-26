@@ -2,6 +2,7 @@ package edu.hawaii.sdlogic.initializer;
 
 import edu.hawaii.sdlogic.Env;
 import edu.hawaii.sdlogic.Term;
+import edu.hawaii.sdlogic.draw.DrawAny;
 import edu.hawaii.sdlogic.draw.DrawPlane;
 import edu.hawaii.sdlogic.draw.DrawPlane2;
 import edu.hawaii.sdlogic.draw.DrawPlane3;
@@ -16,7 +17,6 @@ import edu.hawaii.sdlogic.fertility.Fertility;
 import edu.hawaii.sdlogic.fertility.FlatFertility;
 import edu.hawaii.sdlogic.fertility.HoleFertility;
 import edu.hawaii.sdlogic.fertility.LinearFertility;
-import edu.hawaii.sdlogic.output.CalculateOutput;
 import edu.hawaii.sdlogic.output.CooperativeCalculateOutput;
 import edu.hawaii.sdlogic.output.SimpleCalculateOutput;
 
@@ -63,6 +63,8 @@ public abstract class Initializer {
 				Env.draw = new DrawPlane4();
 			} else if(Env.drawClassName.equals("DrawPlane5")) {
 				Env.draw = new DrawPlane5();
+			} else if(Env.drawClassName.equals("DrawAny")) {
+				Env.draw = new DrawAny();
 			} else {
 				Env.draw = new DrawPlane();
 			}
@@ -138,16 +140,13 @@ public abstract class Initializer {
 			}
 		}
 
-		if(Env.outputs == null) {
-			Env.outputs = new CalculateOutput[Env.types];
-			for(int i = 0; i < Env.types; i++) {
-				if(Env.outputClassName == null) {
-					Env.outputs[i] = new SimpleCalculateOutput(Env.typeNames[i]);
-				} else if(Env.outputClassName.equals("CooperativeCalculateOutput")) {
-					Env.outputs[i] = new CooperativeCalculateOutput(Env.typeNames[i]);
-				} else {
-					Env.outputs[i] = new SimpleCalculateOutput(Env.typeNames[i]);
-				}
+		if(Env.output == null) {
+			if(Env.outputClassName == null) {
+				Env.output = new SimpleCalculateOutput();
+			} else if(Env.outputClassName.equals("CooperativeCalculateOutput")) {
+				Env.output = new CooperativeCalculateOutput();
+			} else {
+				Env.output = new SimpleCalculateOutput();
 			}
 		}
 

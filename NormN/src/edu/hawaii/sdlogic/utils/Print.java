@@ -32,6 +32,30 @@ public class Print {
 	}
 
 	/**
+	 * analyze exchange links
+	 */
+	public static void printExchangeLinks() {
+		int[][] total = new int[Env.typeNames.length][Env.types];
+		int[] count = new int[Env.typeNames.length];
+
+		for(Actor actor: Env.actorList) {
+			int role = actor.getActorType();
+			count[role]++;
+			for(int i = 0; i < Env.types; i++) {
+				int links = actor.getExchangers()[i].size();
+				total[role][i] += links;
+			}
+		}
+
+		for(int i = 0; i < Env.typeNames.length; i++) {
+			System.out.printf("%d ", count[i]);
+			for(int j = 0; j < Env.types; j++) {
+				System.out.printf("%d ", total[i][j]);
+			}
+		}
+	}
+
+	/**
 	 * count collaboration friend numbers
 	 */
 	public static void printCollaborationCount() {

@@ -42,6 +42,11 @@ public class Actor {
 	private LinkedList<Actor>[] exchangers;
 
 	/**
+	 * exchange rate
+	 */
+	private double exchangeRate = Env.exchangeRate;
+
+	/**
 	 * collaborators list
 	 */
 	private Actor[] friends;
@@ -485,5 +490,13 @@ public class Actor {
 
 	public LinkedList<Actor>[] getExchangers() {
 		return exchangers;
+	}
+
+	public double getExchangeRate() {
+		return exchangeRate;
+	}
+
+	public void setExchangeRate(double exchangeRate) {
+		this.exchangeRate = exchangeRate;
 	}
 }

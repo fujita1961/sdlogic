@@ -15,4 +15,6 @@ public interface Draw {
 	 * draw method
 	 */
 	void draw();
+
+	void drawRelation(int x, int y);
 }

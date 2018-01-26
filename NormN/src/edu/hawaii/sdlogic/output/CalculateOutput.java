@@ -10,5 +10,6 @@ import edu.hawaii.sdlogic.operant.OperantResource;
  */
 public interface CalculateOutput {
 	public double calculate(Actor actor, OperantResource otr);
-	public double calculate(Actor actor);
+	// public double calculate(Actor actor);
+	public void calculateAll(Actor actor);
 }

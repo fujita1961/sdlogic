@@ -10,14 +10,14 @@ import edu.hawaii.sdlogic.operant.OperantResource;
  *
  */
 public class SimpleCalculateOutput implements CalculateOutput {
-	private String otrName;
-
-	public SimpleCalculateOutput(String otrName) {
-		this.otrName = otrName;
+	public SimpleCalculateOutput() {
 	}
 
-	public double calculate(Actor actor) {
-		return calculate(actor, actor.getOperantResource(otrName));
+	public void calculateAll(Actor actor) {
+		for(int i = 0; i < Env.types; i++) {
+			OperantResource otr = actor.getOperantResource(Env.typeNames[i]);
+			calculate(actor, otr);
+		}
 	}
 
 	/**

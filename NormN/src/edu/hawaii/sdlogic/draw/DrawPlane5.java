@@ -27,6 +27,9 @@ public class DrawPlane5 extends DrawPlane {
 		if(Env.animationGIFFileName != null) {
 			Canvas.prepareAnimationGIF(Env.animationGIFFileName);
 		}
+
+		leftRelation = mapWidth * cellWidth + displayMargin * 2;
+		topRelation = 0;
 	}
 
 	/**

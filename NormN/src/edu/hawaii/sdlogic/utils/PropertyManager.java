@@ -59,7 +59,9 @@ public class PropertyManager {
 			"deathRate",
 			"outputRate",
 			"searchLimit",
-			"sigmaOutput"
+			"sigmaOutput",
+			"shareRate",
+			"exchangeRate"
 	};
 
 	private String[] stringStrings = {
@@ -85,85 +87,112 @@ public class PropertyManager {
 			"variableCapability",
 			"printCollaborationCountFlag",
 			"printSkillLevelsFlag",
+			"printExchangeLinksFlag",
 			"printStatistics",
 			"printEntropyFlag",
-			"titleBar"
+			"titleBar",
+			"drawMap",
+			"drawLinks",
+			"drawTightLinks",
+			"drawExchange",
+			"drawRelation",
+			"drawRelationDensity"
 	};
 
-	public void interpreteInt(Properties props) {
-		for(String key: intStrings) {
-			String str = props.getProperty(key);
-			if(str != null) {
-				int value = Integer.parseInt(str.trim());
+	public boolean interpreteInt(String key, String val) {
+		for(String str: intStrings) {
+			if(str.equals(key)) {
+				int value = Integer.parseInt(val.trim());
 
 				try {
 					Field field = Env.class.getField(key);
 					field.set(null, value);
+					return true;
 				} catch (NoSuchFieldException e) {
 					e.printStackTrace();
+					return false;
 				} catch (IllegalAccessException iae) {
 					iae.printStackTrace();
+					return false;
 				}
 			}
 		}
+		return false;
 	}
 
-	public void interpreteDouble(Properties props) {
-		for(String key: doubleStrings) {
-			String str = props.getProperty(key);
-			if(str != null) {
-				double value = Double.parseDouble(str.trim());
+	public boolean interpreteDouble(String key, String val) {
+		for(String str: doubleStrings) {
+			if(str.equals(key)) {
+				double value = Double.parseDouble(val.trim());
 
 				try {
 					Field field = Env.class.getField(key);
 					field.set(null, value);
+					return true;
 				} catch (NoSuchFieldException e) {
 					e.printStackTrace();
+					return false;
 				} catch (IllegalAccessException iae) {
 					iae.printStackTrace();
+					return false;
 				}
 			}
 		}
+		return false;
 	}
 
-	public void interpreteString(Properties props) {
-		for(String key: stringStrings) {
-			String str = props.getProperty(key);
-			if(str != null) {
+	public boolean interpreteString(String key, String val) {
+		for(String str: stringStrings) {
+			if(str.equals(key)) {
 				try {
 					Field field = Env.class.getField(key);
-					field.set(null, str.trim());
+					field.set(null, val.trim());
+					return true;
 				} catch (NoSuchFieldException e) {
 					e.printStackTrace();
+					return false;
 				} catch (IllegalAccessException iae) {
 					iae.printStackTrace();
+					return false;
 				}
 			}
 		}
+		return false;
 	}
 
-	public void interpreteBoolean(Properties props) {
-		for(String key: booleanStrings) {
-			String str = props.getProperty(key);
-			if(str != null) {
-				boolean value = Boolean.parseBoolean(str.trim());
+	public boolean interpreteBoolean(String key, String val) {
+		for(String str: booleanStrings) {
+			if(str.equals(key)) {
+				boolean value = Boolean.parseBoolean(val.trim());
 
 				try {
 					Field field = Env.class.getField(key);
 					field.set(null, value);
+					return true;
 				} catch (NoSuchFieldException e) {
 					e.printStackTrace();
+					return false;
 				} catch (IllegalAccessException iae) {
 					iae.printStackTrace();
+					return false;
 				}
 			}
 		}
+		return false;
 	}
 
-	public void interprete(Properties props) {
-		interpreteInt(props);
-		interpreteDouble(props);
-		interpreteString(props);
-		interpreteBoolean(props);
+	public boolean interprete(Properties props) {
+		for(Object obj: props.keySet()) {
+			String str = (String)obj;
+			String val = props.getProperty(str);
+			System.out.println(str + "," + val);
+			if(interpreteInt(str, val) || interpreteDouble(str, val) || interpreteString(str, val)
+					|| interpreteBoolean(str, val)) {
+			} else {
+				System.err.printf("key = %s is not a member of properties or value = %s is ilegal.\n", str, val);
+				return false;
+			}
+		}
+		return true;
 	}
 }

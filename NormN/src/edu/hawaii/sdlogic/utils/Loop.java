@@ -7,11 +7,9 @@ import java.util.Set;
 
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
-import edu.hawaii.sdlogic.Term;
 import edu.hawaii.sdlogic.eval.SDLogicEvaluation;
 import edu.hawaii.sdlogic.initializer.Initializer;
 import edu.hawaii.sdlogic.operant.OperantResource;
-import edu.hawaii.sdlogic.output.CooperativeCalculateOutput;
 import edu.hawaii.utils.Canvas;
 
 public class Loop {
@@ -25,213 +23,23 @@ public class Loop {
 			actor.setPerformance(0);
 		}
 
-		OperantResource[] otrs = new OperantResource[Env.types];
-		double[] outputs = new double[Env.types];
-		double[] outputs0 = new double[Env.types];
-		double[] cooperates = new double[Env.types];
-
 		// @SuppressWarnings("unused")
 		double totalOutput = 0;
 		int totalActors = 0;
 
+		// clear share value
+		if(Env.shareRate > 0) {
+			for(Actor actor: Env.actorList) {
+				for(int i = 0; i < Env.types; i++) {
+					OperantResource ort = actor.getOperantResource(Env.typeNames[i]);
+					ort.setShare(0.0d);
+				}
+			}
+		}
+
 		for(Actor actor: Env.actorList) {
 			if(actor.getPerformance() == 0) {
-				for(int j = 0; j < Env.types; j++) {
-					Env.outputs[j].calculate(actor);
-				}
-
-				if(Env.outputs[0] instanceof CooperativeCalculateOutput) {
-
-					OperantResource collaboOtr = actor.getOperantResource(Term.COLLABORATING);
-
-					for(int j = 0; j < Env.types; j++) {
-						otrs[j] = actor.getOperantResource(Env.typeNames[j]);
-						outputs[j] = otrs[j].getOutput();
-						outputs0[j] = outputs[j];
-					}
-
-					OperantResource actorExchangeOtr = actor.getOperantResource(Term.EXCHANGING);
-					double cooperativeActorExchange =  actorExchangeOtr.getEffort() * actorExchangeOtr.getSkill();
-
-					for(int j = 0; j < Env.friends; j++) {
-						int x0;
-						int y0;
-
-						Actor partner = null;
-
-						while(true) {
-							x0 = Env.rand.nextInt(Env.collaborativeRange * 2 + 1) - Env.collaborativeRange;
-							y0 = Env.rand.nextInt(Env.collaborativeRange * 2 + 1) - Env.collaborativeRange;
-							if(x0 != 0 || y0 != 0) {
-								partner = Env.map[(actor.getX() + x0 + Env.mapWidth) % Env.mapWidth][(actor.getY() + y0 + Env.mapHeight) % Env.mapHeight];
-								if(partner == null) break;
-								boolean cont = false;
-								if(Env.friendFlag) {
-									for(int k = 0; k < Env.friends; k++) {
-										if(partner == actor.getFriend(k)) {
-											cont = true;
-											break;
-										}
-									}
-								} else {
-									for(int k = 0; k < j - 1; k++) {
-										if(partner == actor.getFriend(k)) {
-											cont = true;
-											break;
-										}
-									}
-								}
-								if(!cont) {
-									break;
-								}
-							}
-						};
-
-						// cooperative performance with partner
-
-						double value = 0;
-
-						if(partner != null) {
-							OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
-
-							for(int k = 0; k < Env.types; k++) {
-								OperantResource partnerOtr = partner.getOperantResource(Env.typeNames[k]);
-								if(collaboOtr != null) {
-									cooperates[k] = partnerOtr.getEffort() * partnerOtr.getSkill()
-											* collaboOtr.getSkill() * partnerCollaboOtr.getSkill();
-								} else {
-									cooperates[k] = partnerOtr.getEffort() * partnerOtr.getSkill();
-								}
-								// outputs[k] *= (1 + cooperate / Env.friends);
-								// outputs0[k] is not equal to outputs[k]
-								value += outputs0[k] * (1 + cooperates[k] / Env.friends);
-							}
-
-							// exchange
-							OperantResource partnerExchangeOtr = partner.getOperantResource(Term.EXCHANGING);
-							double cooperativeExchange;
-							if(collaboOtr != null) {
-								cooperativeExchange =  partnerExchangeOtr.getEffort() * partnerExchangeOtr.getSkill()
-										* collaboOtr.getSkill() * partnerCollaboOtr.getSkill();
-							} else {
-								cooperativeExchange =  partnerExchangeOtr.getEffort() * partnerExchangeOtr.getSkill();
-							}
-							double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange / Env.friends);
-
-							value += actorExchangeOutput;
-
-						} else {
-							// partner == null
-							if(Env.macroFlag1) {
-								int neighbours = 0;
-								int neighboursPartner = 0;
-								for(int x1 = -1; x1 <= 1; x1++) {
-									for(int y1 = -1; y1 <= 1; y1++) {
-										if(x1 !=0 || y1 != 0) {
-											int x2 = (actor.getX() + x0 + x1 + Env.mapWidth) % Env.mapWidth;
-											int y2 = (actor.getY() + y0 + y1 + Env.mapHeight) % Env.mapHeight;
-											if(Env.map[x2][y2] != null) {
-												neighboursPartner++;
-											}
-
-											int x3 = (actor.getX() + x1 + Env.mapWidth) % Env.mapWidth;
-											int y3 = (actor.getY() + y1 + Env.mapHeight) % Env.mapHeight;
-											if(Env.map[x3][y3] != null) {
-												neighbours++;
-											}
-
-										}
-									}
-								}
-
-								if(neighboursPartner > neighbours) {
-									int x00 = (actor.getX() + x0 + Env.mapWidth) % Env.mapWidth;
-									int y00 = (actor.getY() + y0 + Env.mapWidth) % Env.mapWidth;
-									Env.map[actor.getX()][actor.getY()] = null;
-									Env.map[x00][y00] = actor;
-									actor.setX(x00);
-									actor.setY(y00);
-								}
-							} else if(Env.macroFlag2){
-								double entropyValue = Env.entropy.primitiveEntropy(actor.getX(), actor.getY(), 1, false);
-								int x2 = (actor.getX() + x0 + Env.mapWidth) % Env.mapWidth;
-								int y2 = (actor.getY() + y0 + Env.mapHeight) % Env.mapHeight;
-								double partnerEntropy = Env.entropy.primitiveEntropy(x2, y2, 1, false);
-
-								if(partnerEntropy < entropyValue) {
-									// System.out.println("entropy = " + entropy +" " + partnerEntropy);
-									Env.map[actor.getX()][actor.getY()] = null;
-									Env.map[x2][y2] = actor;
-									actor.setX(x2);
-									actor.setY(y2);
-								}
-							}
-						}
-
-						if(Env.friendFlag && value < actor.getFriendValue(j)) {
-							/*
-							&& Math.abs(actor.getFriend(j).getX() - actor.getX()) <= Env.collaborativeRange
-							&& Math.abs(actor.getFriend(j).getY() - actor.getY()) <= Env.collaborativeRange) {
-							*/
-							partner = actor.getFriend(j);
-							value = 0;
-
-							OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
-
-							for(int k = 0; k < Env.types; k++) {
-								OperantResource partnerOtr = partner.getOperantResource(Env.typeNames[k]);
-
-								double cooperate;
-
-								if(collaboOtr != null) {
-									cooperate = partnerOtr.getEffort() * partnerOtr.getSkill() *
-											collaboOtr.getSkill() * partnerCollaboOtr.getSkill();
-								} else {
-									cooperate = partnerOtr.getEffort() * partnerOtr.getSkill();
-								}
-
-								outputs[k] *= (1 + cooperate / Env.friends);
-								// outputs[k] = otrs[k].getOutput() * (1 + cooperate / Env.friends);
-								value += outputs0[k] * (1 + cooperate / Env.friends);
-							}
-
-							OperantResource partnerExchangeOtr = partner.getOperantResource(Term.EXCHANGING);
-							double cooperativeExchange;
-							if(collaboOtr != null) {
-								cooperativeExchange =  partnerExchangeOtr.getEffort() * partnerExchangeOtr.getSkill()
-										* collaboOtr.getSkill() * partnerCollaboOtr.getSkill();
-							} else {
-								cooperativeExchange =  partnerExchangeOtr.getEffort() * partnerExchangeOtr.getSkill();
-							}
-							double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange / Env.friends);
-
-							value += actorExchangeOutput;
-						} else {
-							for(int k = 0; k < Env.types; k++) {
-								outputs[k] *= (1 + cooperates[k] / Env.friends);
-							}
-						}
-
-						actor.setFriend(j, partner);
-						actor.setFriendValue(j, value);
-					}
-
-					for(int k = 0; k < Env.types; k++) {
-						double output = outputs[k];
-						if(output < otrs[k].getOutput())
-							System.out.println("Strange");
-						output *= (1 + Env.rand.nextGaussian() * Env.sigmaOutput);
-						if(output < 0) output = 0;
-						otrs[k].setOutput(output);
-						otrs[k].setOutput0(output);
-					}
-				}
-
-				/*
-				for(int k = 0; k < Env.types; k++) {
-					totalOutput += actor.getOperantResource(Env.typeNames[k]).getOutput();
-				}
-				*/
+				Env.output.calculateAll(actor);
 
 				{
 					int x = actor.getX() - Env.mapWidth / 2;;
@@ -291,6 +99,18 @@ public class Loop {
 
 						}
 					}
+				}
+			}
+		}
+
+		// add share value
+		if(Env.shareRate > 0) {
+			for(Actor actor: Env.actorList) {
+				for(int i = 0; i < Env.types; i++) {
+					OperantResource ort = actor.getOperantResource(Env.typeNames[i]);
+					double share = ort.getShare();
+					ort.addOutput(share);
+					ort.addOutput0(share);
 				}
 			}
 		}
@@ -371,6 +191,11 @@ public class Loop {
 			int y = Canvas.getPointedY();
 
 			if(x != prevX || y != prevY) {
+
+				if(Env.drawRelation) {
+					Env.draw.drawRelation(x, y);
+				}
+
 				// wait for click
 				Canvas.waitForPoint();
 				x = Canvas.getPointedX();
@@ -509,6 +334,10 @@ public class Loop {
 				Print.printSkillLevels();
 			}
 
+			if(Env.printExchangeLinksFlag) {
+				Print.printExchangeLinks();
+			}
+
 			if(Env.printEntropyFlag) {
 				Env.entropy.printMaxEntropy();
 				Env.entropy.friendEntropy();
@@ -516,7 +345,7 @@ public class Loop {
 			}
 
 			if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
-					|| Env.printStatistics) {
+					|| Env.printStatistics || Env.printExchangeLinksFlag) {
 				System.out.println();
 			}
 

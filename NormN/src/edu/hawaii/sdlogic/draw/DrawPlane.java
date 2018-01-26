@@ -2,6 +2,10 @@ package edu.hawaii.sdlogic.draw;
 
 import static edu.hawaii.sdlogic.Env.*;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
 import edu.hawaii.utils.Canvas;
@@ -122,6 +126,252 @@ public class DrawPlane implements Draw {
 	}
 
 	/**
+	 * draw tight collaboration links
+	 * @param actor
+	 * @param left left margin
+	 * @param top top margin
+	 * @param x x coordinate
+	 * @param y y coordinate
+	 * @param rgb color
+	 */
+	protected void drawTightLinks(Actor actor, int left, int top, int x, int y, int[] rgb) {
+		int cellWidthHalf = cellWidth / 2;
+		int cellHeightHalf = cellHeight / 2;
+		int heightBias = cellHeightHalf + displayMargin;
+
+		for(int i = 0; i < Env.friends; i++) {
+			Actor friend = actor.getFriend(i);
+			if(friend != null) {
+				int fx = friend.getX();
+				int fy = friend.getY();
+
+				if(friend.getReverseFriends().size() > 100) {
+					// && actor.getReverseFriends().contains(friend)) {
+					// && Math.abs(fx - x) <= collaborativeRange && Math.abs(fy - y) <= collaborativeRange)
+
+					int x0 = left + x * cellWidth + cellWidthHalf;
+					int y0 = y * cellHeight + heightBias;
+					int x2 = left + fx * cellWidth + cellWidthHalf;
+					int y2 = fy * cellHeight + heightBias;
+					int x1 = (x0 + x2 * 4) / 5;
+					int y1 = (y0 + y2 * 4) / 5;
+					Canvas.setColor(rgb[0], rgb[1], rgb[2]);
+					Canvas.drawLine(x0, y0, x1, y1);
+					Canvas.setColor(200, 200, 0);
+					Canvas.drawLine(x1, y1, x2, y2);
+				}
+			}
+		}
+	}
+
+	private void drawActor(Actor actor, int left, int top, int distance, int max) {
+		int half = max / 2 + 1;
+
+		int blue = distance * 255 / max;
+		int red = (max - distance) * 255 / max;
+		int green = 0;
+
+		if(distance < half) {
+			red = (half - distance) * 255 / half;
+			green = distance * 255 / half;
+			blue = 0;
+		} else {
+			red = 0;
+			green = (max - distance) * 255 / (max - half);
+			blue = (distance - half) * 255 / (max - half);
+		}
+
+		Canvas.setColor(red, green, blue);
+		Canvas.fillRect(left + actor.getX() * cellWidth + displayMargin,
+				top + actor.getY() * cellHeight + displayMargin, cellWidth, cellHeight);
+	}
+
+	protected int leftRelation;
+	protected int topRelation;
+
+	/**
+	 * draw relation
+	 * @param leftRelation left margin
+	 * @param topRelation top margin
+	 */
+	public void drawRelation(int x, int y) {
+		int max = 10;
+
+		int xx = (x - Env.displayMargin) / Env.cellWidth;
+		int yy = (y - Env.displayMargin) / Env.cellHeight;
+
+		if(xx >= Env.map.length || yy >= Env.map[xx].length || xx < 0 || yy < 0) {
+			return;
+		}
+		Actor origin = Env.map[xx][yy];
+		if(origin == null) {
+			return;
+		}
+
+		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
+		for(Actor actor: Env.actorList) {
+			LinkedList<Actor>[] exchangers = actor.getExchangers();
+			for(int i = 0; i < Env.types; i++) {
+				for(Actor exchanger: exchangers[i]) {
+					HashSet<Actor> set = map.get(exchanger);
+					if(set == null) {
+						set = new HashSet<Actor>();
+						map.put(exchanger, set);
+					}
+					set.add(actor);
+				}
+			}
+		}
+
+		HashSet<Actor> now = new HashSet<Actor>();
+		HashSet<Actor> next = new HashSet<Actor>();
+		HashSet<Actor> done = new HashSet<Actor>();
+
+		now.add(origin);
+		done.add(origin);
+		drawActor(origin, leftRelation, topRelation, 0, max);
+
+		System.out.print(Env.actorList.size() + ": ");;
+
+		for(int i = 1; i < max; i++) {
+			System.out.print(now.size() + " ");
+			for(Actor actor: now) {
+				for(int j = 0; j < Env.friends; j++) {
+					Actor friend = actor.getFriend(j);
+					if(friend != null && !done.contains(friend)) {
+						done.add(friend);
+						next.add(friend);
+						drawActor(friend, leftRelation, topRelation, i, max);
+					}
+				}
+
+				for(Actor friend: actor.getReverseFriends()) {
+					if(!done.contains(friend)) {
+						done.add(friend);
+						next.add(friend);
+						drawActor(friend, leftRelation, topRelation, i, max);
+					}
+				}
+
+				for(int j = 0; j < Env.types; j++) {
+					for(Actor friend: actor.getExchangers()[j]) {
+						if(!done.contains(friend)) {
+							done.add(friend);
+							next.add(friend);
+							drawActor(friend, leftRelation, topRelation, i, max);
+						}
+					}
+				}
+
+				HashSet<Actor> actors = map.get(actor);
+				if(actors != null && !actors.isEmpty()) {
+					for(Actor friend: actors) {
+						if(!done.contains(friend)) {
+							done.add(friend);
+							next.add(friend);
+							drawActor(friend, leftRelation, topRelation, i, max);
+						}
+					}
+				}
+			}
+
+			HashSet<Actor> tmp = now;
+			now = next;
+			next = tmp;
+			next.clear();
+		}
+
+		System.out.println();
+
+		Canvas.forceRepaint();
+	}
+
+	/**
+	 * draw relation density
+	 * @param leftRelation left margin
+	 * @param topRelation top margin
+	 */
+	public void drawRelationDensity(int left, int top) {
+		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
+		for(Actor actor: Env.actorList) {
+			LinkedList<Actor>[] exchangers = actor.getExchangers();
+			for(int i = 0; i < Env.types; i++) {
+				for(Actor exchanger: exchangers[i]) {
+					HashSet<Actor> set = map.get(exchanger);
+					if(set == null) {
+						set = new HashSet<Actor>();
+						map.put(exchanger, set);
+					}
+					set.add(actor);
+				}
+			}
+		}
+
+		HashSet<Actor> now = new HashSet<Actor>();
+		HashSet<Actor> next = new HashSet<Actor>();
+		HashSet<Actor> done = new HashSet<Actor>();
+		int max = 3;
+
+		for(Actor origin: Env.actorList) {
+			now.clear();
+			done.clear();
+			next.clear();
+			now.add(origin);
+			done.add(origin);
+
+			for(int i = 1; i < max; i++) {
+				for(Actor actor: now) {
+					for(int j = 0; j < Env.friends; j++) {
+						Actor friend = actor.getFriend(j);
+						if(friend != null && !done.contains(friend)) {
+							done.add(friend);
+							next.add(friend);
+						}
+					}
+
+					for(Actor friend: actor.getReverseFriends()) {
+						if(!done.contains(friend)) {
+							done.add(friend);
+							next.add(friend);
+						}
+					}
+
+					for(int j = 0; j < Env.types; j++) {
+						for(Actor friend: actor.getExchangers()[j]) {
+							if(!done.contains(friend)) {
+								done.add(friend);
+								next.add(friend);
+							}
+						}
+					}
+
+					HashSet<Actor> actors = map.get(actor);
+					if(actors != null && !actors.isEmpty()) {
+						for(Actor friend: actors) {
+							if(!done.contains(friend)) {
+								done.add(friend);
+								next.add(friend);
+							}
+						}
+					}
+				}
+
+				HashSet<Actor> tmp = now;
+				now = next;
+				next = tmp;
+				next.clear();
+			}
+
+			int num = done.size();
+
+			if(num > 127) num = 127;
+			Canvas.setColor((127 - num) * 2, 0, num * 2);
+			Canvas.fillRect(left + origin.getX() * cellWidth + displayMargin,
+					top + origin.getY() * cellHeight + displayMargin, cellWidth, cellHeight);
+		}
+	}
+
+	/**
 	 * draw exchange links
 	 * @param actor
 	 * @param left left margin
@@ -136,7 +386,7 @@ public class DrawPlane implements Draw {
 		int heightBias = cellHeightHalf + displayMargin;
 
 		for(int i = 0; i < Env.types; i++) {
-			if(actor.getExchangers()[i].size() > 3) {
+			if(actor.getExchangers()[i].size() > 4) {
 				for(Actor friend: actor.getExchangers()[i]) {
 					if(friend != null) {
 						int fx = friend.getX();
