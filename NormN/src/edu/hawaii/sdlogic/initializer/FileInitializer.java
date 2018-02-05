@@ -58,8 +58,8 @@ public class FileInitializer extends Initializer {
 				actor.setX(x);
 				actor.setY(y);
 
-				for(int i = 0; i < Env.typeNames.length; i++) {
-					String ortName = Env.typeNames[i];
+				for(int i = 0; i < Env.roleNames.length; i++) {
+					String ortName = Env.roleNames[i];
 					double capability = Double.parseDouble(words[count++]);
 					double effort = Double.parseDouble(words[count++]);
 

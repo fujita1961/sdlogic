@@ -12,12 +12,12 @@ public class FlatFertility extends Fertility {
 	}
 
 	/**
-	 * Capacity value is always 2.
-	 * @return 2
+	 * Capacity value is always 1.
+	 * @return 1
 	 */
 	@Override
 	public double calculate(int x, int y) {
-		return 2;
+		return 1;
 	}
 
 	/**

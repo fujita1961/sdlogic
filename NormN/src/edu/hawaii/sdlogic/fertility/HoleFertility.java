@@ -37,7 +37,7 @@ public class HoleFertility extends Fertility {
 	}
 
 	protected HoleFertility() {
-		this(4.0, 2.0,10.0, 5.0);
+		this(2.0, 1.0,10.0, 5.0);
 	}
 
 	/**

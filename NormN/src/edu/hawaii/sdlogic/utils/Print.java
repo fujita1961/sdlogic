@@ -12,20 +12,20 @@ public class Print {
 	 * analyze skill levels for each role
 	 */
 	public static void printSkillLevels() {
-		double[][] total = new double[Env.typeNames.length][Env.typeNames.length];
-		int[] count = new int[Env.typeNames.length];
+		double[][] total = new double[Env.roleNames.length][Env.roleNames.length];
+		int[] count = new int[Env.roleNames.length];
 
 		for(Actor actor: Env.actorList) {
 			int role = actor.getActorType();
 			count[role]++;
-			for(int i = 0; i < Env.typeNames.length; i++) {
-				OperantResource ort = actor.getOperantResource(Env.typeNames[i]);
+			for(int i = 0; i < Env.roleNames.length; i++) {
+				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 				total[role][i] += ort.getSkill();
 			}
 		}
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
-			for(int j = 0; j < Env.typeNames.length; j++) {
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			for(int j = 0; j < Env.roleNames.length; j++) {
 				System.out.printf("%4.2f ", total[i][j] / count[i]);
 			}
 		}
@@ -35,21 +35,21 @@ public class Print {
 	 * analyze exchange links
 	 */
 	public static void printExchangeLinks() {
-		int[][] total = new int[Env.typeNames.length][Env.types];
-		int[] count = new int[Env.typeNames.length];
+		int[][] total = new int[Env.roleNames.length][Env.roles];
+		int[] count = new int[Env.roleNames.length];
 
 		for(Actor actor: Env.actorList) {
 			int role = actor.getActorType();
 			count[role]++;
-			for(int i = 0; i < Env.types; i++) {
+			for(int i = 0; i < Env.roles; i++) {
 				int links = actor.getExchangers()[i].size();
 				total[role][i] += links;
 			}
 		}
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
+		for(int i = 0; i < Env.roleNames.length; i++) {
 			System.out.printf("%d ", count[i]);
-			for(int j = 0; j < Env.types; j++) {
+			for(int j = 0; j < Env.roles; j++) {
 				System.out.printf("%d ", total[i][j]);
 			}
 		}

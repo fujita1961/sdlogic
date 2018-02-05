@@ -83,7 +83,7 @@ public class Actor {
 	public static void reclaim(Actor actor) {
 		actor.clearFriends();
 		if(Env.exchangeClassName.equals("MemoryExchange")) {
-			for(int i = 0; i < Env.types; i++) {
+			for(int i = 0; i < Env.roles; i++) {
 				actor.exchangers[i].clear();
 			}
 		}
@@ -112,14 +112,14 @@ public class Actor {
 		reverseFriends = new HashSet<Actor>();
 
 		if(Env.exchangeClassName.equals("MemoryExchange")) {
-			exchangers = new LinkedList[Env.types];
-			for(int i = 0; i < Env.types; i++) {
+			exchangers = new LinkedList[Env.roles];
+			for(int i = 0; i < Env.roles; i++) {
 				exchangers[i] = new LinkedList<Actor>();
 			}
 		}
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
-			String ortName = Env.typeNames[i];
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			String ortName = Env.roleNames[i];
 			OperantResource ort = new OperantResource(ortName);
 			ort.setType(i);
 
@@ -153,6 +153,7 @@ public class Actor {
 
 		age = Env.rand.nextInt(Env.lifeSpan);
 		lifeSpan = (int)(Env.lifeSpan + Env.rand.nextGaussian() * 10);
+		exchangeRate = Env.exchangeRate;
 	}
 
 	/**
@@ -372,8 +373,8 @@ public class Actor {
 		int index = -1;
 		double max = -1;
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
-			OperantResource ort = getOperantResource(Env.typeNames[i]);
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			OperantResource ort = getOperantResource(Env.roleNames[i]);
 			double effort = ort.getEffort();
 			if(effort > max) {
 				max = effort;

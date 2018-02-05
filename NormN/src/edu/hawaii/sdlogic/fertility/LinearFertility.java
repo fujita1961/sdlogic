@@ -38,7 +38,7 @@ public class LinearFertility extends Fertility {
 	public double calculate(int x, int y) {
 		double x0 = ((double)((x + Env.mapWidth * (1 - peak)) % Env.mapWidth)) * 2 /  Env.mapWidth;
 		double x1 = Math.abs(x0 - 1);
-		return (x1 - 0.5) * angle * 2 + 2;
+		return (x1 - 0.5) * angle * 1 + 1;
 	}
 
 	public static LinearFertility get(double a, double b) {

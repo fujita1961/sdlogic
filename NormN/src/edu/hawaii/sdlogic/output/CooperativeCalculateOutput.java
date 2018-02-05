@@ -22,8 +22,8 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 		OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
 
 		// calculate collaborating effect
-		for(int k = 0; k < Env.types; k++) {
-			OperantResource partnerOtr = partner.getOperantResource(Env.typeNames[k]);
+		for(int k = 0; k < Env.roles; k++) {
+			OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[k]);
 			if(collaboOtr != null) {
 				cooperates[k] = partnerOtr.getEffort() * partnerOtr.getSkill()
 						* collaboOtr.getSkill() * partnerCollaboOtr.getSkill();
@@ -52,15 +52,15 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 	}
 
 	public void calculateAll(Actor actor) {
-		OperantResource[] otrs = new OperantResource[Env.types];
-		double[] outputs = new double[Env.types];
-		double[] outputs0 = new double[Env.types];
-		double[] cooperates0 = new double[Env.types];
-		double[] cooperates1 = new double[Env.types];
+		OperantResource[] otrs = new OperantResource[Env.roles];
+		double[] outputs = new double[Env.roles];
+		double[] outputs0 = new double[Env.roles];
+		double[] cooperates0 = new double[Env.roles];
+		double[] cooperates1 = new double[Env.roles];
 
 		// calcuate
-		for(int i = 0; i < Env.types; i++) {
-			otrs[i] = actor.getOperantResource(Env.typeNames[i]);
+		for(int i = 0; i < Env.roles; i++) {
+			otrs[i] = actor.getOperantResource(Env.roleNames[i]);
 			outputs[i] = calculate(actor, otrs[i]);
 			outputs0[i] = outputs[i];
 		}
@@ -185,7 +185,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 						if(value2 > value) {
 							// replace
-							for(int k = 0; k < Env.types; k++) {
+							for(int k = 0; k < Env.roles; k++) {
 								cooperates0[k] = cooperates1[k];
 							}
 							value = value2;
@@ -206,8 +206,8 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 					OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
 
-					for(int k = 0; k < Env.types; k++) {
-						OperantResource partnerOtr = partner.getOperantResource(Env.typeNames[k]);
+					for(int k = 0; k < Env.roles; k++) {
+						OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[k]);
 
 						double cooperate;
 
@@ -225,7 +225,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 						if(Env.shareRate > 0) {
 							double share = outputs0[k] * Env.shareRate * cooperate / Env.friends;
-							OperantResource otr = partner.getOperantResource(Env.typeNames[k]);
+							OperantResource otr = partner.getOperantResource(Env.roleNames[k]);
 							otr.addShare(share);
 						}
 					}
@@ -242,21 +242,21 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 					value += actorExchangeOutput;
 				} else {
-					for(int k = 0; k < Env.types; k++) {
+					for(int k = 0; k < Env.roles; k++) {
 						outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
 						if(Env.shareRate > 0 && partner != null) {
 							double share = outputs0[k] * Env.shareRate * cooperates0[k] / Env.friends;
-							OperantResource otr = partner.getOperantResource(Env.typeNames[k]);
+							OperantResource otr = partner.getOperantResource(Env.roleNames[k]);
 							otr.addShare(share);
 						}
 					}
 				}
 			} else {
-				for(int k = 0; k < Env.types; k++) {
+				for(int k = 0; k < Env.roles; k++) {
 					outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
 					if(Env.shareRate > 0 && partner != null) {
 						double share = outputs0[k] * Env.shareRate * cooperates0[k] / Env.friends;
-						OperantResource otr = partner.getOperantResource(Env.typeNames[k]);
+						OperantResource otr = partner.getOperantResource(Env.roleNames[k]);
 						otr.addShare(share);
 					}
 				}
@@ -267,7 +267,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 		}
 
 		// add fluctuation to the output
-		for(int k = 0; k < Env.types; k++) {
+		for(int k = 0; k < Env.roles; k++) {
 			double output = outputs[k];
 			/*
 			if(output < otrs[k].getOutput())

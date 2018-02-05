@@ -43,15 +43,17 @@ public class PropertyManager {
 			"mapWidth",
 			"mapHeight",
 			"actors",
-			"types",
+			"roles",
 			"lifeSpan",
 			"searchIteration",
 			"collaborativeRange",
 			"friends",
-			"loops",
+			"periods",
+			"repeats",
 			"windowSize",
 			"drawInterval",
-			"animationGIFInterval"
+			"animationGIFInterval",
+			"printInterval"
 	};
 
 	private String[] doubleStrings = {

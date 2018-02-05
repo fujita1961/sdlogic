@@ -116,7 +116,7 @@ public class BestSelectInitializer extends Initializer {
 				Env.map[actor.getX()][actor.getY()] = actor;
 			}
 
-			Loop.oneTurn(satisfiedActors);
+			Loop.oneTurn(satisfiedActors, -1);
 
 			// Env.draw.draw();
 
@@ -163,7 +163,7 @@ public class BestSelectInitializer extends Initializer {
 					Env.actorList.add(candidates[i * children][j]);
 				}
 
-				Loop.oneTurn(satisfiedActors);
+				Loop.oneTurn(satisfiedActors, turn);
 
 				pops[i].actors = candidates[i * children];
 				pops[i].satisfiedActors = satisfiedActors.size();
@@ -196,7 +196,7 @@ public class BestSelectInitializer extends Initializer {
 						// Env.map[actor.getX()][actor.getY()] = actor;
 					}
 
-					Loop.oneTurn(satisfiedActors);
+					Loop.oneTurn(satisfiedActors, turn);
 
 					pops[i + k * pools].actors = candidates[i * children + k];
 					pops[i + k * pools].satisfiedActors = satisfiedActors.size();
@@ -297,8 +297,8 @@ public class BestSelectInitializer extends Initializer {
 		to.setAge(from.getAge());
 		to.setLifeSpan(from.getLifeSpan());
 		to.setPerformance(from.getPerformance());
-		for(int i = 0; i < Env.typeNames.length; i++) {
-			String ortName = Env.typeNames[i];
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			String ortName = Env.roleNames[i];
 
 			OperantResource fromOrt = from.getOperantResource(ortName);
 			OperantResource toOrt = to.getOperantResource(ortName);
@@ -312,8 +312,8 @@ public class BestSelectInitializer extends Initializer {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append(String.format("%d %d ", actor.getX(), actor.getY()));
-		for(int i = 0; i < Env.typeNames.length; i++) {
-			String ortName = Env.typeNames[i];
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			String ortName = Env.roleNames[i];
 			OperantResource ort = actor.getOperantResource(ortName);
 
 			sb.append(String.format("%f %f ", ort.getSkill(), ort.getEffort()));

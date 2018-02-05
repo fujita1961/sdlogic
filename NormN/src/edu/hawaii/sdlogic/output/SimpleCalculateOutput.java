@@ -14,8 +14,8 @@ public class SimpleCalculateOutput implements CalculateOutput {
 	}
 
 	public void calculateAll(Actor actor) {
-		for(int i = 0; i < Env.types; i++) {
-			OperantResource otr = actor.getOperantResource(Env.typeNames[i]);
+		for(int i = 0; i < Env.roles; i++) {
+			OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
 			calculate(actor, otr);
 		}
 	}

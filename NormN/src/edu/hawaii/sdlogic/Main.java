@@ -24,7 +24,7 @@ public class Main {
 		Env.actors = 2000;
 		Env.drawClassName = "DrawPlane2";
 
-		Env.outputRate = 0.7;
+		Env.outputRate = 1.4;
 		// Env.outputRate = 1.3;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
@@ -57,7 +57,7 @@ public class Main {
 		Env.actors = 300;
 
 		Env.drawClassName = "DrawPlane";
-		Env.outputRate = 0.7;
+		Env.outputRate = 1.4;
 		Env.searchIteration = 10;
 		Env.searchLimit = 200;
 		Env.learnFlag = false;
@@ -94,11 +94,11 @@ public class Main {
 		Env.mapHeight = 200;
 		Env.actors = 8000;
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 
 		Env.drawClassName = "DrawPlane";
-		Env.outputRate = 0.35 * Env.types;
+		Env.outputRate = 0.7 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 1000;
 		Env.learnFlag = false;
@@ -127,13 +127,13 @@ public class Main {
 		Env.mapHeight = 200;
 		Env.actors = 10000;
 
-		Env.types = 5;
+		Env.roles = 5;
 		Env.enableExchanging = true;
 
 		Env.drawClassName = "DrawPlane";
 
 		// 0.38 0.39-0.41 0.42-0.5
-		Env.outputRate = 0.40 * Env.types;
+		Env.outputRate = 0.80 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = true;
@@ -164,12 +164,12 @@ public class Main {
 		Env.mapHeight = 20;
 		Env.actors = 210;
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 
 		Env.drawClassName = "DrawPlane2";
 
-		Env.outputRate = 0.30 * Env.types;
+		Env.outputRate = 0.60 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 800;
 		Env.learnFlag = false;
@@ -202,13 +202,13 @@ public class Main {
 		Env.mapHeight = 200;
 		Env.actors = 350;
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane2";
 
-		Env.outputRate = 0.45 * Env.types;
+		Env.outputRate = 0.9 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = false;
@@ -242,13 +242,13 @@ public class Main {
 		Env.mapHeight = 200;
 		Env.actors = 10000;
 
-		Env.types = 5;
+		Env.roles = 5;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane";
 
-		Env.outputRate = 0.4 * Env.types;
+		Env.outputRate = 0.8 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = false;
@@ -282,14 +282,14 @@ public class Main {
 		Env.mapHeight = 200;
 		Env.actors = 10000;
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane2";
 
-		//Env.outputRate = 0.55 * Env.types;
-		Env.outputRate = 0.45 * Env.types;
+		//Env.outputRate = 1.10 * Env.types;
+		Env.outputRate = 0.90 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = false;
@@ -324,14 +324,14 @@ public class Main {
 
 		Env.actors = 10000; // 2000-20000
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane";
 
-		Env.outputRate = 0.3125 * Env.types; // 0.3-0.45
-		// Env.outputRate = 0.33 * Env.types; // 0.3-0.45
+		Env.outputRate = 0.625 * Env.roles; // 0.6-0.90
+		// Env.outputRate = 0.66 * Env.types; // 0.6-0.90
 		// Env.lifeSpan = 2000;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
@@ -368,13 +368,13 @@ public class Main {
 
 		Env.actors = 10000; // 2000-20000
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane2";
 
-		Env.outputRate = 0.32 * Env.types; // 0.3-0.45
+		Env.outputRate = 0.64 * Env.roles; // 0.6-0.90
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = false;
@@ -409,12 +409,12 @@ public class Main {
 		Env.mapHeight = 200;
 		Env.actors = 350;
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane";
-		Env.outputRate = 0.30 * Env.types;
+		Env.outputRate = 0.60 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = false;
@@ -468,13 +468,13 @@ public class Main {
 
 		Env.actors = 50;
 
-		Env.types = 2;
+		Env.roles = 2;
 		Env.enableExchanging = true;
 		Env.enableCollaborating = true;
 
 		Env.drawClassName = "DrawPlane2";
 		Env.titleBar = true;
-		Env.outputRate = 0.35 * Env.types;
+		Env.outputRate = 0.70 * Env.roles;
 		Env.searchIteration = 100;
 		Env.searchLimit = 2000;
 		Env.learnFlag = false;
@@ -509,6 +509,10 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
+		String propertyFile = "props/base.properties";
+		if(args.length == 1) {
+			propertyFile = args[0];
+		}
 		dummy();
 
 		// test1();
@@ -526,8 +530,9 @@ public class Main {
 		// test17();
 
 		PropertyManager manager = new PropertyManager();
-		Properties props = manager.read("props/test17.properties");
+		Properties props = manager.read(propertyFile);
 		manager.interprete(props);
+
 		Loop.mainLoop();
 	}
 }

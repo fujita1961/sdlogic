@@ -31,15 +31,15 @@ public class SimpleExchange implements Exchange {
 	 * @param extras
 	 */
 	protected void categorizeActors(Set<Actor> satisfiedActors, Set<Actor> poorActors, List<Actor>[] extras) {
-		double[] outputs = new double[Env.types];
-		double liveCondition = Env.liveCondition * Env.types;
+		double[] outputs = new double[Env.roles];
+		double liveCondition = Env.liveCondition * Env.roles;
 
 		for(Actor actor: Env.actorList) {
 			double total = 0;
 
 			boolean satisfy = true;
-			for(int k = 0; k < Env.types; k++) {
-				outputs[k] = actor.getOperantResource(Env.typeNames[k]).getOutput();
+			for(int k = 0; k < Env.roles; k++) {
+				outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				total += outputs[k];
 				if(outputs[k] < Env.liveCondition) {
 					satisfy = false;
@@ -54,7 +54,7 @@ public class SimpleExchange implements Exchange {
 					// partial satisfaction
 					poorActors.add(actor);
 
-					for(int k = 0; k < Env.types; k++) {
+					for(int k = 0; k < Env.roles; k++) {
 						if(outputs[k] >= Env.liveCondition) {
 							extras[k].add(actor);
 						}
@@ -107,9 +107,9 @@ public class SimpleExchange implements Exchange {
 	public void exchange(Set<Actor> satisfiedActors) {
 		// actors who have extra amount of resources
 		@SuppressWarnings("unchecked")
-		List<Actor>[] extras = new ArrayList[Env.types];
+		List<Actor>[] extras = new ArrayList[Env.roles];
 
-		for(int k = 0; k < Env.types; k++) {
+		for(int k = 0; k < Env.roles; k++) {
 			extras[k] = new ArrayList<Actor>();
 		}
 
@@ -125,7 +125,7 @@ public class SimpleExchange implements Exchange {
 		// System.out.println(Env.actorList.size());
 		// System.out.println(poorActors.size());
 
-		double[] outputs = new double[Env.types];
+		double[] outputs = new double[Env.roles];
 
 		// List variables for learning
 		List<String> inc = null;
@@ -141,10 +141,10 @@ public class SimpleExchange implements Exchange {
 			decPartner = new ArrayList<String>();
 		}
 
-		double[] partnerOutputs = new double[Env.types];
+		double[] partnerOutputs = new double[Env.roles];
 		int[] exchangerIndex = null;
 		if(memorized) {
-			exchangerIndex = new int[Env.types];
+			exchangerIndex = new int[Env.roles];
 		}
 
 		int size = Env.actorList.size();
@@ -163,8 +163,8 @@ public class SimpleExchange implements Exchange {
 
 				if(originalSatisfiedActors.contains(actor)) {
 					if(Env.learnFlag) {
-						for(int k = 0; k < Env.types; k++) {
-							inc.add(Env.typeNames[k]);
+						for(int k = 0; k < Env.roles; k++) {
+							inc.add(Env.roleNames[k]);
 						}
 						dec.add(Term.EXCHANGING);
 						actor.update(inc, dec);
@@ -175,8 +175,8 @@ public class SimpleExchange implements Exchange {
 			} else if(poorActors.contains(actor)) {
 				// actor does not satisfy the living condition
 
-				for(int k = 0; k < Env.types; k++) {
-					outputs[k] = actor.getOperantResource(Env.typeNames[k]).getOutput();
+				for(int k = 0; k < Env.roles; k++) {
+					outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				}
 
 				// the maximum distance for searching
@@ -186,7 +186,7 @@ public class SimpleExchange implements Exchange {
 				double exchangeCapability = calculateExchangeCapability(actor);
 
 				if(memorized) {
-					for(int i = 0; i < Env.types; i++) {
+					for(int i = 0; i < Env.roles; i++) {
 						exchangerIndex[i] = 0;
 						// tentative;
 						// actor.getExchangers()[i].clear();
@@ -202,7 +202,7 @@ public class SimpleExchange implements Exchange {
 					// type index for the minimum output
 					int minIndex = 0;
 
-					for(int k = 1; k < Env.types; k++) {
+					for(int k = 1; k < Env.roles; k++) {
 						if(outputs[k] < min) {
 							min = outputs[k];
 							minIndex = k;
@@ -255,8 +255,8 @@ public class SimpleExchange implements Exchange {
 						double sum = 0;
 						double minus = 0;
 
-						for(int k = 0; k < Env.types; k++) {
-							partnerOutputs[k] = partner.getOperantResource(Env.typeNames[k]).getOutput();
+						for(int k = 0; k < Env.roles; k++) {
+							partnerOutputs[k] = partner.getOperantResource(Env.roleNames[k]).getOutput();
 							if(Env.exchangeRate > 1.0) {
 								double diff = partnerOutputs[k] - Env.liveCondition;
 								if(diff < 0) {
@@ -273,34 +273,34 @@ public class SimpleExchange implements Exchange {
 						// partner must have enough resources.
 						if(sum > 0) {
 							double minus0 = minus;
-							for(int k = 0; k < Env.types; k++) {
+							for(int k = 0; k < Env.roles; k++) {
 								double plus = partnerOutputs[k] - Env.liveCondition;
 								if(plus > 0) {
 									if(Env.learnFlag) {
-										incPartner.add(Env.typeNames[k]);
+										incPartner.add(Env.roleNames[k]);
 									}
 									extras[k].remove(partner);
 								} else {
 									if(Env.learnFlag) {
-										decPartner.add(Env.typeNames[k]);
+										decPartner.add(Env.roleNames[k]);
 									}
 								}
 
 								if(Env.exchangeRate > 1.0) {
 									if(plus > 0) {
 										if(minus0 + plus >= 0) {
-											partner.getOperantResource(Env.typeNames[k]).addOutput(minus0);
+											partner.getOperantResource(Env.roleNames[k]).addOutput(minus0);
 											minus0 = 0;
 										} else {
-											partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+											partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
 											minus0 += plus;
 										}
 									} else {
-										partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+										partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
 									}
 								} else {
 									// set the partner's output just to the living condition.
-									partner.getOperantResource(Env.typeNames[k]).setOutput(Env.liveCondition);
+									partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
 								}
 							}
 
@@ -316,7 +316,7 @@ public class SimpleExchange implements Exchange {
 
 							// add exchanging margin to the actor's output
 							boolean satisfy = true;
-							for(int k = 0; k < Env.types; k++) {
+							for(int k = 0; k < Env.roles; k++) {
 								double plus = partnerOutputs[k] - Env.liveCondition;
 								if(Env.exchangeRate > 1.0) {
 									if(plus > 0) {
@@ -343,15 +343,15 @@ public class SimpleExchange implements Exchange {
 								poorActors.remove(actor);
 								satisfiedActors.add(actor);
 
-								for(int k = 0; k < Env.types; k++) {
+								for(int k = 0; k < Env.roles; k++) {
 									if(extras[k].contains(actor)) {
 										extras[k].remove(actor);
 										if(Env.learnFlag) {
-											inc.add(Env.typeNames[k]);
+											inc.add(Env.roleNames[k]);
 										}
 									} else {
 										if(Env.learnFlag) {
-											dec.add(Env.typeNames[k]);
+											dec.add(Env.roleNames[k]);
 										}
 									}
 								}
@@ -370,7 +370,7 @@ public class SimpleExchange implements Exchange {
 				}
 
 				if(memorized) {
-					for(int i = 0; i < Env.types; i++) {
+					for(int i = 0; i < Env.roles; i++) {
 						LinkedList<Actor> exchangers = actor.getExchangers()[i];
 						int diff = exchangers.size() - exchangerIndex[i];
 						if(diff > 0) {
@@ -382,8 +382,8 @@ public class SimpleExchange implements Exchange {
 				}
 
 				// put back to the output of operant resources
-				for(int k = 0; k < Env.types; k++) {
-					actor.getOperantResource(Env.typeNames[k]).setOutput(outputs[k]);
+				for(int k = 0; k < Env.roles; k++) {
+					actor.getOperantResource(Env.roleNames[k]).setOutput(outputs[k]);
 				}
 
 				Env.eval.evaluate(actor);
@@ -393,8 +393,8 @@ public class SimpleExchange implements Exchange {
 
 				System.err.println("This code must not be used in the current version!");
 
-				for(int k = 0; k < Env.types; k++) {
-					outputs[k] = actor.getOperantResource(Env.typeNames[k]).getOutput();
+				for(int k = 0; k < Env.roles; k++) {
+					outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				}
 
 				double searchLimit = Env.searchLimit;
@@ -405,7 +405,7 @@ public class SimpleExchange implements Exchange {
 					double min = outputs[0];
 					int minIndex = 0;
 
-					for(int k = 1; k < Env.types; k++) {
+					for(int k = 1; k < Env.roles; k++) {
 						if(outputs[k] < min) {
 							min = outputs[k];
 							minIndex = k;
@@ -424,8 +424,8 @@ public class SimpleExchange implements Exchange {
 
 						boolean satisfy = true;
 
-						for(int k = 0; k < Env.types; k++) {
-							partnerOutputs[k] = partner.getOperantResource(Env.typeNames[k]).getOutput();
+						for(int k = 0; k < Env.roles; k++) {
+							partnerOutputs[k] = partner.getOperantResource(Env.roleNames[k]).getOutput();
 
 							if(partnerOutputs[k] + outputs[k] < Env.liveCondition * 2) {
 								satisfy = false;
@@ -434,7 +434,7 @@ public class SimpleExchange implements Exchange {
 						}
 
 						if(satisfy) {
-							for(int k = 0; k < Env.types; k++) {
+							for(int k = 0; k < Env.roles; k++) {
 								if(partnerOutputs[k] >= Env.liveCondition) {
 									extras[k].remove(partner);
 								}
@@ -443,8 +443,8 @@ public class SimpleExchange implements Exchange {
 									extras[k].remove(actor);
 								}
 
-								actor.getOperantResource(Env.typeNames[k]).setOutput((outputs[k] + partnerOutputs[k]) / 2);
-								partner.getOperantResource(Env.typeNames[k]).setOutput((outputs[k] + partnerOutputs[k]) / 2);
+								actor.getOperantResource(Env.roleNames[k]).setOutput((outputs[k] + partnerOutputs[k]) / 2);
+								partner.getOperantResource(Env.roleNames[k]).setOutput((outputs[k] + partnerOutputs[k]) / 2);
 							}
 
 							Env.eval.evaluate(actor);
@@ -457,17 +457,17 @@ public class SimpleExchange implements Exchange {
 								incPartner.clear();
 								decPartner.clear();
 
-								for(int k = 0; k < Env.types; k++) {
+								for(int k = 0; k < Env.roles; k++) {
 									if(partnerOutputs[k] >= Env.liveCondition) {
-										incPartner.add(Env.typeNames[k]);
+										incPartner.add(Env.roleNames[k]);
 									} else {
-										decPartner.add(Env.typeNames[k]);
+										decPartner.add(Env.roleNames[k]);
 									}
 
 									if(outputs[k] >= Env.liveCondition) {
-										inc.add(Env.typeNames[k]);
+										inc.add(Env.roleNames[k]);
 									} else {
-										dec.add(Env.typeNames[k]);
+										dec.add(Env.roleNames[k]);
 									}
 								}
 

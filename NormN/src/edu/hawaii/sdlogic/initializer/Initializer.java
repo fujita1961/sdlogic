@@ -82,8 +82,8 @@ public abstract class Initializer {
 			Env.eval = new SDLogicEvaluation();
 		}
 
-		if(Env.typeNames == null) {
-			int types = Env.types;
+		if(Env.roleNames == null) {
+			int types = Env.roles;
 
 			if(Env.enableExchanging) {
 				types++;
@@ -93,17 +93,17 @@ public abstract class Initializer {
 				types++;
 			}
 
-			Env.typeNames = new String[types];
-			for(int i = 0; i < Env.types; i++) {
-				Env.typeNames[i] = ("Type-" + i).intern();
+			Env.roleNames = new String[types];
+			for(int i = 0; i < Env.roles; i++) {
+				Env.roleNames[i] = ("Role-" + i).intern();
 			}
 
 			if(Env.enableExchanging) {
-				Env.typeNames[Env.types] = Term.EXCHANGING;
+				Env.roleNames[Env.roles] = Term.EXCHANGING;
 			}
 
 			if(Env.enableCollaborating) {
-				Env.typeNames[Env.types + 1] = Term.COLLABORATING;
+				Env.roleNames[Env.roles + 1] = Term.COLLABORATING;
 			}
 		}
 	}
@@ -113,25 +113,25 @@ public abstract class Initializer {
 	 */
 	protected static void initFertilityAndOutputFunction() {
 		if(Env.fertilityMaps == null) {
-			Env.fertilityMaps = new double[Env.types][Env.mapWidth][Env.mapHeight];
+			Env.fertilityMaps = new double[Env.roles][Env.mapWidth][Env.mapHeight];
 		}
 
 		if(Env.fertilityClasses == null) {
-			Env.fertilityClasses = new Fertility[Env.types];
+			Env.fertilityClasses = new Fertility[Env.roles];
 
-			for(int i = 0; i < Env.types; i++) {
+			for(int i = 0; i < Env.roles; i++) {
 				if(Env.fertilityClassName == null) {
 					Env.fertilityClasses[i] = FlatFertility.get();
 				} else if(Env.fertilityClassName.equals("HoleFertility")) {
-					Env.fertilityClasses[i] = HoleFertility.get(6.0, 2.0, 10.0, 5.0);
+					Env.fertilityClasses[i] = HoleFertility.get(3.0, 1.0, 10.0, 5.0);
 				} else if(Env.fertilityClassName.equals("LinearFertility")) {
-					Env.fertilityClasses[i] = LinearFertility.get(0.6, 0.5 / Env.types + ((double)i) / Env.types);
+					Env.fertilityClasses[i] = LinearFertility.get(0.6, 0.5 / Env.roles + ((double)i) / Env.roles);
 				} else {
 					Env.fertilityClasses[i] = FlatFertility.get();
 				}
 			}
 
-			for(int i = 0; i < Env.types; i++) {
+			for(int i = 0; i < Env.roles; i++) {
 				for(int x = 0; x < Env.mapWidth; x++) {
 					for(int y = 0; y < Env.mapHeight; y++) {
 						Env.fertilityMaps[i][x][y] = Env.fertilityClasses[i].calculate(x, y);

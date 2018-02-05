@@ -81,14 +81,14 @@ public class Env {
 	/**
 	 * number of critical operant resources
 	 */
-	public static int types = 2;
+	public static int roles = 2;
 
 	/**
 	 * names of operant resources
 	 * The length of this array is more than Env.types,
 	 * because this array involves Exchanging and Collaborating operant resources.
 	 */
-	public static String[] typeNames;
+	public static String[] roleNames;
 
 	/**
 	 * enable exchanging operant resource
@@ -228,9 +228,14 @@ public class Env {
 	public static boolean variableCapability = false;
 
 	/**
-	 * the number of simulation loops
+	 * the number of simulation periods
 	 */
-	public static int loops = 1000;
+	public static int periods = 1000;
+
+	/**
+	 * the number of repeticion for executing simulations
+	 */
+	public static int repeats = 1;
 
 	// public static boolean haveCollaboratingOperantResource = false;
 
@@ -340,6 +345,11 @@ public class Env {
 	 * file name of animationGIF
 	 */
 	public static String animationGIFFileName = null;
+
+	/**
+	 * print interval
+	 */
+	public static int printInterval = 1;
 
 	/**
 	 * print the number of collaboration friends

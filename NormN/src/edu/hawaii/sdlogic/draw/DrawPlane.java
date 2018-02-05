@@ -55,8 +55,8 @@ public class DrawPlane implements Draw {
 		int green = 0;
 		int blue = 0;
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
-			String name = Env.typeNames[i];
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			String name = Env.roleNames[i];
 			double effort = actor.getOperantResource(name).getEffort();
 			red += (int)(effort * colors[i % colors.length][0]);
 			green += (int)(effort * colors[i % colors.length][1]);
@@ -211,7 +211,7 @@ public class DrawPlane implements Draw {
 		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
 		for(Actor actor: Env.actorList) {
 			LinkedList<Actor>[] exchangers = actor.getExchangers();
-			for(int i = 0; i < Env.types; i++) {
+			for(int i = 0; i < Env.roles; i++) {
 				for(Actor exchanger: exchangers[i]) {
 					HashSet<Actor> set = map.get(exchanger);
 					if(set == null) {
@@ -253,7 +253,7 @@ public class DrawPlane implements Draw {
 					}
 				}
 
-				for(int j = 0; j < Env.types; j++) {
+				for(int j = 0; j < Env.roles; j++) {
 					for(Actor friend: actor.getExchangers()[j]) {
 						if(!done.contains(friend)) {
 							done.add(friend);
@@ -295,7 +295,7 @@ public class DrawPlane implements Draw {
 		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
 		for(Actor actor: Env.actorList) {
 			LinkedList<Actor>[] exchangers = actor.getExchangers();
-			for(int i = 0; i < Env.types; i++) {
+			for(int i = 0; i < Env.roles; i++) {
 				for(Actor exchanger: exchangers[i]) {
 					HashSet<Actor> set = map.get(exchanger);
 					if(set == null) {
@@ -336,7 +336,7 @@ public class DrawPlane implements Draw {
 						}
 					}
 
-					for(int j = 0; j < Env.types; j++) {
+					for(int j = 0; j < Env.roles; j++) {
 						for(Actor friend: actor.getExchangers()[j]) {
 							if(!done.contains(friend)) {
 								done.add(friend);
@@ -385,7 +385,7 @@ public class DrawPlane implements Draw {
 		int cellHeightHalf = cellHeight / 2;
 		int heightBias = cellHeightHalf + displayMargin;
 
-		for(int i = 0; i < Env.types; i++) {
+		for(int i = 0; i < Env.roles; i++) {
 			if(actor.getExchangers()[i].size() > 4) {
 				for(Actor friend: actor.getExchangers()[i]) {
 					if(friend != null) {

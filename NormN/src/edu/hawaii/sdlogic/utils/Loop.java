@@ -18,7 +18,7 @@ public class Loop {
 	 *   core loop of this simulator
 	 * @param satisfiedActors
 	 */
-	public static void oneTurn(Set<Actor> satisfiedActors) {
+	public static void oneTurn(Set<Actor> satisfiedActors, int turn) {
 		for(Actor actor: Env.actorList) {
 			actor.setPerformance(0);
 		}
@@ -30,8 +30,8 @@ public class Loop {
 		// clear share value
 		if(Env.shareRate > 0) {
 			for(Actor actor: Env.actorList) {
-				for(int i = 0; i < Env.types; i++) {
-					OperantResource ort = actor.getOperantResource(Env.typeNames[i]);
+				for(int i = 0; i < Env.roles; i++) {
+					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 					ort.setShare(0.0d);
 				}
 			}
@@ -47,8 +47,8 @@ public class Loop {
 
 					if(x * x + y * y > 100) {
 						totalActors++;
-						for(int k = 0; k < Env.types; k++) {
-							totalOutput += actor.getOperantResource(Env.typeNames[k]).getOutput();
+						for(int k = 0; k < Env.roles; k++) {
+							totalOutput += actor.getOperantResource(Env.roleNames[k]).getOutput();
 						}
 
 					}
@@ -58,7 +58,7 @@ public class Loop {
 			}
 
 			if(Env.macroFlag3) {
-				int[] counts = new int[Env.typeNames.length];
+				int[] counts = new int[Env.roleNames.length];
 				boolean found = false;
 
 				for(int x1 = -1; x1 <= 1 && !found; x1++) {
@@ -68,25 +68,25 @@ public class Loop {
 							int y2 = (actor.getY() + y1 + Env.mapHeight) % Env.mapHeight;
 							Actor neighbor = Env.map[x2][y2];
 							if(neighbor != null) {
-								for(int j = 0; j < Env.typeNames.length; j++) {
-									OperantResource ort = neighbor.getOperantResource(Env.typeNames[j]);
+								for(int j = 0; j < Env.roleNames.length; j++) {
+									OperantResource ort = neighbor.getOperantResource(Env.roleNames[j]);
 									if(ort.getEffort() > 0.5) {
 										counts[j]++;
 										if(counts[j] > 4) {
-											double effort = actor.getOperantResource(Env.typeNames[j]).getEffort();
+											double effort = actor.getOperantResource(Env.roleNames[j]).getEffort();
 											if(effort < 0.5) {
-												actor.getOperantResource(Env.typeNames[j]).setEffort(effort + 1);
+												actor.getOperantResource(Env.roleNames[j]).setEffort(effort + 1);
 
 												double sum = 0;
-												double[] efforts = new double[Env.typeNames.length];
+												double[] efforts = new double[Env.roleNames.length];
 
-												for(int k = 0; k < Env.typeNames.length; k++) {
-													efforts[k] = actor.getOperantResource(Env.typeNames[k]).getEffort();
+												for(int k = 0; k < Env.roleNames.length; k++) {
+													efforts[k] = actor.getOperantResource(Env.roleNames[k]).getEffort();
 													sum+= efforts[k];
 												}
 
-												for(int k = 0; k < Env.typeNames.length; k++) {
-													actor.getOperantResource(Env.typeNames[k]).setEffort(efforts[k] / sum);
+												for(int k = 0; k < Env.roleNames.length; k++) {
+													actor.getOperantResource(Env.roleNames[k]).setEffort(efforts[k] / sum);
 												}
 											}
 
@@ -106,8 +106,8 @@ public class Loop {
 		// add share value
 		if(Env.shareRate > 0) {
 			for(Actor actor: Env.actorList) {
-				for(int i = 0; i < Env.types; i++) {
-					OperantResource ort = actor.getOperantResource(Env.typeNames[i]);
+				for(int i = 0; i < Env.roles; i++) {
+					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 					double share = ort.getShare();
 					ort.addOutput(share);
 					ort.addOutput0(share);
@@ -119,50 +119,52 @@ public class Loop {
 			Env.exchange.exchange(satisfiedActors);
 		}
 
-		int[] population = new int[Env.typeNames.length + 1];
-		double[][] outcome = new double[Env.typeNames.length + 1][Env.types];
+		int[] population = new int[Env.roleNames.length + 1];
+		double[][] outcome = new double[Env.roleNames.length + 1][Env.roles];
 
 		for(Actor actor: Env.actorList) {
 			boolean found = false;
-			for(int i = 0; i < Env.typeNames.length; i++) {
-				OperantResource ort = actor.getOperantResource(Env.typeNames[i]);
+			for(int i = 0; i < Env.roleNames.length; i++) {
+				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 				if(ort.getEffort() > 0.66) {
 					population[i]++;
 					found = true;
-					for(int j = 0; j < Env.types; j++) {
-						OperantResource ort2 = actor.getOperantResource(Env.typeNames[j]);
+					for(int j = 0; j < Env.roles; j++) {
+						OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
 						outcome[i][j] += ort2.getOutput0();
 					}
 					break;
 				}
 			}
 			if(!found) {
-				population[Env.typeNames.length]++;
-				for(int j = 0; j < Env.types; j++) {
-					OperantResource ort2 = actor.getOperantResource(Env.typeNames[j]);
-					outcome[Env.typeNames.length][j] += ort2.getOutput0();
+				population[Env.roleNames.length]++;
+				for(int j = 0; j < Env.roles; j++) {
+					OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
+					outcome[Env.roleNames.length][j] += ort2.getOutput0();
 				}
 			}
 		}
 
-		if(Env.printStatistics) {
-			// System.out.println("average of output: " + totalOutput / Env.actorList.size() / Env.types);
-			System.out.printf("%d ", Env.actorList.size());
-			for(int i = 0; i < Env.typeNames.length + 1; i++) {
-				System.out.printf("%d ", population[i]);
-				for(int j = 0; j < Env.types; j++) {
-					if(population[i] != 0) {
-						System.out.printf("%8.6f ", outcome[i][j] / population[i]);
-					} else {
-						System.out.print("0.0 ");
+		if((turn + 1) % Env.printInterval == 0) {
+			if(Env.printStatistics) {
+				// System.out.println("average of output: " + totalOutput / Env.actorList.size() / Env.types);
+				System.out.printf("%d ", Env.actorList.size());
+				for(int i = 0; i < Env.roleNames.length + 1; i++) {
+					System.out.printf("%d ", population[i]);
+					for(int j = 0; j < Env.roles; j++) {
+						if(population[i] != 0) {
+							System.out.printf("%8.6f ", outcome[i][j] / population[i]);
+						} else {
+							System.out.print("0.0 ");
+						}
 					}
 				}
-			}
-			// System.out.printf("%8.6f%n", totalOutput / Env.actorList.size() / Env.types);
-			if(totalActors > 0) {
-				System.out.printf("%8.6f ", totalOutput / totalActors / Env.types);
-			} else {
-				System.out.printf("%8.6f ", 0.0d);
+				// System.out.printf("%8.6f%n", totalOutput / Env.actorList.size() / Env.types);
+				if(totalActors > 0) {
+					System.out.printf("%8.6f ", totalOutput / totalActors / Env.roles);
+				} else {
+					System.out.printf("%8.6f ", 0.0d);
+				}
 			}
 		}
 	}
@@ -176,13 +178,20 @@ public class Loop {
 		int prevY = Canvas.getPointedY();
 
 		// turn is the number of the loop
-		for(int turn = 0; turn < Env.loops; turn++) {
+		for(int turn = 0; turn < Env.periods; turn++) {
 			// if the actor list becomes empty before the end of the loop, return false
 			if(Env.actorList.isEmpty()) {
-				if(turn < Env.loops) {
+				if(turn < Env.periods) {
 					return false;
 				} else {
 					return true;
+				}
+			}
+
+			if((turn + 1) % Env.printInterval == 0) {
+				if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
+						|| Env.printStatistics || Env.printExchangeLinksFlag) {
+					System.out.print((turn + 1) + " ");
 				}
 			}
 
@@ -210,7 +219,7 @@ public class Loop {
 			// satisfied actors must be defined outside of the oneTurn.
 			Set<Actor> satisfiedActors = new HashSet<Actor>();
 
-			oneTurn(satisfiedActors);
+			oneTurn(satisfiedActors, turn);
 
 			if(Env.changePopulation && turn > 0) {
 				// change population mode
@@ -326,27 +335,30 @@ public class Loop {
 				}
 			}
 
-			if(Env.printCollaborationCountFlag) {
-				Print.printCollaborationCount();
-			}
+			if((turn + 1) % Env.printInterval == 0) {
 
-			if(Env.printSkillLevelsFlag) {
-				Print.printSkillLevels();
-			}
+				if(Env.printSkillLevelsFlag) {
+					Print.printSkillLevels();
+				}
 
-			if(Env.printExchangeLinksFlag) {
-				Print.printExchangeLinks();
-			}
+				if(Env.printExchangeLinksFlag) {
+					Print.printExchangeLinks();
+				}
 
-			if(Env.printEntropyFlag) {
-				Env.entropy.printMaxEntropy();
-				Env.entropy.friendEntropy();
-				Env.entropy.entropy();
-			}
+				if(Env.printEntropyFlag) {
+					Env.entropy.printMaxEntropy();
+					Env.entropy.friendEntropy();
+					Env.entropy.entropy();
+				}
 
-			if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
-					|| Env.printStatistics || Env.printExchangeLinksFlag) {
-				System.out.println();
+				if(Env.printCollaborationCountFlag) {
+					Print.printCollaborationCount();
+				}
+
+				if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
+						|| Env.printStatistics || Env.printExchangeLinksFlag) {
+					System.out.println();
+				}
 			}
 
 			if(turn % Env.drawInterval == 0) {
@@ -370,14 +382,16 @@ public class Loop {
 	}
 
 	public static void mainLoop() {
-		Initializer.metaInit();
-		Env.initializer.init();
-		Env.draw.draw();
-
-		while(!Loop.loop()) {
+		for(int i = 0; i < Env.repeats; i++) {
+			Initializer.metaInit();
 			Env.initializer.init();
-		}
+			Env.draw.draw();
 
-		fin();
+			while(!Loop.loop()) {
+				Env.initializer.init();
+			}
+
+			fin();
+		}
 	}
 }

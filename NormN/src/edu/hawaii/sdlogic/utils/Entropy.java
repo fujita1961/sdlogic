@@ -15,7 +15,7 @@ import edu.hawaii.utils.Canvas;
 public class Entropy {
 	public double primitiveEntropy(int x, int y, int range, boolean self) {
 		int empty = 0;
-		int[] typeWorkers = new int[Env.typeNames.length];
+		int[] typeWorkers = new int[Env.roleNames.length];
 
 		for(int i = -range; i <= range; i++) {
 			int xx = (x + i + Env.mapWidth) % Env.mapWidth;
@@ -31,8 +31,8 @@ public class Entropy {
 					double max = 0.0;
 					int maxIndex = -1;
 
-					for(int k = 0; k < Env.typeNames.length; k++) {
-						OperantResource otr = actor.getOperantResource(Env.typeNames[k]);
+					for(int k = 0; k < Env.roleNames.length; k++) {
+						OperantResource otr = actor.getOperantResource(Env.roleNames[k]);
 						double value = otr.getSkill() * otr.getEffort();
 
 						if(value > max) {
@@ -47,7 +47,15 @@ public class Entropy {
 		}
 
 		int width = 2 * range + 1;
-		double width2 = width * width;
+
+		// 2018/01/30 changed.
+		double width2;
+
+		if(self) {
+			width2 = width * width;
+		} else {
+			width2 = width * width - 1;
+		}
 
 		double entropy = 0;
 
@@ -56,7 +64,7 @@ public class Entropy {
 			entropy -= pempty * Math.log(pempty);
 		}
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
+		for(int i = 0; i < Env.roleNames.length; i++) {
 			if(typeWorkers[i] != 0) {
 				double p = (double)typeWorkers[i] / width2;
 				entropy -= p * Math.log(p);
@@ -68,7 +76,7 @@ public class Entropy {
 
 	public double primitiveEntropy(Actor self) {
 		int empty = 0;
-		int[] typeWorkers = new int[Env.typeNames.length];
+		int[] typeWorkers = new int[Env.roleNames.length];
 
 		for(int i = 0; i < Env.friends; i++) {
 			Actor actor = self.getFriend(i);
@@ -78,8 +86,8 @@ public class Entropy {
 				double max = 0.0;
 				int maxIndex = -1;
 
-				for(int k = 0; k < Env.typeNames.length; k++) {
-					OperantResource otr = actor.getOperantResource(Env.typeNames[k]);
+				for(int k = 0; k < Env.roleNames.length; k++) {
+					OperantResource otr = actor.getOperantResource(Env.roleNames[k]);
 					double value = otr.getSkill() * otr.getEffort();
 
 					if(value > max) {
@@ -99,7 +107,7 @@ public class Entropy {
 			entropy -= pempty * Math.log(pempty);
 		}
 
-		for(int i = 0; i < Env.typeNames.length; i++) {
+		for(int i = 0; i < Env.roleNames.length; i++) {
 			if(typeWorkers[i] != 0) {
 				double p = (double)typeWorkers[i] / Env.friends;
 				entropy -= p * Math.log(p);
@@ -142,7 +150,7 @@ public class Entropy {
 
 		double val = sum / Math.log(2);
 
-		System.out.print(val / (Env.mapWidth * Env.mapHeight));
+		System.out.print((val / (Env.mapWidth * Env.mapHeight)) + " ");
 
 		return val;
 	}
@@ -158,7 +166,8 @@ public class Entropy {
 
 		double val = sum / Math.log(2);
 
-		System.out.print(val / (Env.mapWidth * Env.mapHeight) + " ");
+		// 2018/01/30 changed
+		System.out.print(val / Env.actorList.size() + " ");
 
 		return val;
 	}
@@ -202,7 +211,7 @@ public class Entropy {
 
 	public void printMaxEntropy() {
 		int actors = Env.actorList.size();
-		int types = Env.types + 2;
+		int types = Env.roles + 2;
 		double emptyP = 1 - ((double)actors) / (Env.mapWidth * Env.mapHeight);
 
 		System.out.print(actors + " " + maxEntropy(9, types, emptyP) + " ");
