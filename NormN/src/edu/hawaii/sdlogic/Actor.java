@@ -69,7 +69,7 @@ public class Actor {
 	/**
 	 * lifeSpan of the actor
 	 */
-	private int lifeSpan;
+	private double lifeSpan;
 
 	/**
 	 * actor object pool
@@ -83,7 +83,7 @@ public class Actor {
 	public static void reclaim(Actor actor) {
 		actor.clearFriends();
 		if(Env.exchangeClassName.equals("MemoryExchange")) {
-			for(int i = 0; i < Env.roles; i++) {
+			for(int i = 0; i < Env.roles + Env.stockRoles; i++) {
 				actor.exchangers[i].clear();
 			}
 		}
@@ -112,8 +112,8 @@ public class Actor {
 		reverseFriends = new HashSet<Actor>();
 
 		if(Env.exchangeClassName.equals("MemoryExchange")) {
-			exchangers = new LinkedList[Env.roles];
-			for(int i = 0; i < Env.roles; i++) {
+			exchangers = new LinkedList[Env.roles + Env.stockRoles];
+			for(int i = 0; i < Env.roles + Env.stockRoles; i++) {
 				exchangers[i] = new LinkedList<Actor>();
 			}
 		}
@@ -134,10 +134,14 @@ public class Actor {
 		double total = 0;
 
 		for(OperantResource ort: resources.values()) {
+			/*
 			double effort = Env.rand.nextDouble();
 			total += effort;
 
 			ort.setEffort(effort);
+			*/
+			ort.setEffort(0);
+
 			if(Env.variableCapability) {
 				// double capability = 0.9 + 0.1 * Env.rand.nextDouble();
 				double capability = Env.rand.nextDouble();
@@ -145,10 +149,51 @@ public class Actor {
 			} else {
 				ort.setSkill(1.0);
 			}
+
+			ort.setOutput(0);
+			ort.setOutput0(0);
 		}
 
+		/*
 		for(OperantResource ort: resources.values()) {
 			ort.setEffort(ort.getEffort() / total);
+		}
+		*/
+
+		int roles;
+
+		if(Env.enableStoring2) {
+			for(int i = 0; i < Env.roles; i++) {
+				OperantResource ort = getOperantResource(Env.roleNames[i]);
+
+				double effort = Env.rand.nextDouble();
+				total += effort;
+				ort.setEffort(effort);
+			}
+
+			for(int i = Env.roles; i < Env.roles + Env.stockRoles; i++) {
+				OperantResource ort = getOperantResource(Env.roleNames[i]);
+
+				double effort = Env.rand.nextDouble() / Env.storeRate;
+				total += effort;
+				ort.setEffort(effort);
+			}
+
+			for(int i = Env.roles + Env.stockRoles; i < Env.roleNames.length; i++) {
+				OperantResource ort = getOperantResource(Env.roleNames[i]);
+
+				double effort = Env.rand.nextDouble();
+				total += effort;
+				ort.setEffort(effort);
+			}
+		} else {
+			for(int i = 0; i < Env.roleNames.length; i++) {
+				OperantResource ort = getOperantResource(Env.roleNames[i]);
+
+				double effort = Env.rand.nextDouble();
+				total += effort;
+				ort.setEffort(effort);
+			}
 		}
 
 		age = Env.rand.nextInt(Env.lifeSpan);
@@ -296,11 +341,17 @@ public class Actor {
 		double total = 0;
 
 		// imitate values of all operant resources
-		for(String otrName: resources.keySet()) {
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			String otrName = Env.roleNames[i];
 			OperantResource mine = resources.get(otrName);
 			OperantResource yours = actor.getOperantResource(otrName);
 
-			double value = yours.getEffort() + 0.1 * Env.rand.nextGaussian();
+			double value = 0;
+			if(!Env.enableStoring2 || i < Env.roles || i >= Env.roles + Env.stockRoles) {
+				value = yours.getEffort() + 0.1 * Env.rand.nextGaussian();
+			} else {
+				value = yours.getEffort() + 0.1 * Env.rand.nextGaussian() / Env.storeRate;
+			}
 			if(value < 0) value = 0;
 
 			if(Env.variableCapability) {
@@ -317,6 +368,8 @@ public class Actor {
 
 			mine.setEffort(value);
 			total += value;
+			mine.setOutput(0);
+			mine.setOutput0(0);
 		}
 
 		// canonicalize effort values
@@ -473,12 +526,16 @@ public class Actor {
 		return ++age;
 	}
 
-	public int getLifeSpan() {
+	public double getLifeSpan() {
 		return lifeSpan;
 	}
 
-	public void setLifeSpan(int lifeSpan) {
+	public void setLifeSpan(double lifeSpan) {
 		this.lifeSpan = lifeSpan;
+	}
+
+	public void addLifeSpan(double lifeSpan) {
+		this.lifeSpan += lifeSpan;
 	}
 
 	public Set<Actor> getReverseFriends() {

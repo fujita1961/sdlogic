@@ -20,6 +20,10 @@ public class CenterSquareInitializer extends Initializer {
 		this.centerWidth = centerWidth;
 	}
 
+	public CenterSquareInitializer() {
+		this(5);
+	}
+
 	/**
 	 * init method
 	 */

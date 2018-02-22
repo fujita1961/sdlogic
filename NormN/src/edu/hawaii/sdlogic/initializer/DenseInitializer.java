@@ -23,6 +23,10 @@ public class DenseInitializer extends Initializer {
 		this.width = width;
 	}
 
+	public DenseInitializer() {
+		this(7);
+	}
+
 	/**
 	 * init method
 	 */
@@ -37,8 +41,9 @@ public class DenseInitializer extends Initializer {
 		double effort = 0.9;
 		List<Actor> actors = new ArrayList<Actor>();
 		Set<Actor> friends = new HashSet<Actor>();
+		int roles = Env.roles + Env.stockRoles;
 
-		for(int type = 0; type < Env.roles; type++) {
+		for(int type = 0; type < roles; type++) {
 			actors.clear();
 
 			for(int i = 0; i < width * width; i++) {
@@ -55,22 +60,22 @@ public class DenseInitializer extends Initializer {
 
 				actor.setXY(x, y);
 
-				for(int j = 0; j < Env.roles; j++) {
+				for(int j = 0; j < roles; j++) {
 					if(type == j) {
 						actor.getOperantResource(Env.roleNames[j]).setSkill(0.9);
 						actor.getOperantResource(Env.roleNames[j]).setEffort(effort);
 					} else {
 						actor.getOperantResource(Env.roleNames[j]).setSkill(0.5);
-						actor.getOperantResource(Env.roleNames[j]).setEffort((1 - effort) / (Env.roles));
+						actor.getOperantResource(Env.roleNames[j]).setEffort((1 - effort) / (roles));
 					}
 				}
 				// Exchange skill
-				actor.getOperantResource(Env.roleNames[Env.roles]).setSkill(0.9);
-				actor.getOperantResource(Env.roleNames[Env.roles]).setEffort((1 - effort) / (Env.roles));
+				actor.getOperantResource(Env.roleNames[roles]).setSkill(0.9);
+				actor.getOperantResource(Env.roleNames[roles]).setEffort((1 - effort) / (roles));
 
 				// Collaboration skill
-				actor.getOperantResource(Env.roleNames[Env.roles + 1]).setSkill(0.9);
-				actor.getOperantResource(Env.roleNames[Env.roles * 1]).setEffort(0);
+				actor.getOperantResource(Env.roleNames[roles + 1]).setSkill(0.9);
+				actor.getOperantResource(Env.roleNames[roles * 1]).setEffort(0);
 			}
 
 			for(Actor actor: actors) {

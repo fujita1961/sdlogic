@@ -28,6 +28,11 @@ public class Term {
 	public static String COLLABORATING = "Collaborating".intern();
 
 	/**
+	 * operant resource for collaborating
+	 */
+	public static String STORING = "Storing".intern();
+
+	/**
 	 * operant resource for resting
 	 */
 	// public static String RESTING = "Resting".intern();

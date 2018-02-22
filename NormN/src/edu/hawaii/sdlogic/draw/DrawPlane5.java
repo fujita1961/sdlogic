@@ -17,6 +17,7 @@ public class DrawPlane5 extends DrawPlane {
 	 */
 	@Override
 	public void init() {
+		initColor();
 		// displayWidth = mapWidth * cellWidth + displayMargin * 2;
 		displayWidth = mapWidth * cellWidth * 2 + displayMargin * 3;
 		// displayWidth = mapWidth * cellWidth * 3 + displayMargin * 4;

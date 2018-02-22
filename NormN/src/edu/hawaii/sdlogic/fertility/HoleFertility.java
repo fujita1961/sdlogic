@@ -36,8 +36,9 @@ public class HoleFertility extends Fertility {
 //		Capacity.setCapacity(Term.FISH, fishCapacity);
 	}
 
-	protected HoleFertility() {
-		this(2.0, 1.0,10.0, 5.0);
+	public HoleFertility() {
+		this(3.0, 1.0,10.0, 5.0);
+		// this(6.0, 1.0,10.0, 5.0);
 	}
 
 	/**
@@ -47,7 +48,7 @@ public class HoleFertility extends Fertility {
 	 * @param radiusOut radius of the outside of the circle
 	 * @param radiusIn radius of the inside of the circle
 	 */
-	protected HoleFertility(double peak, double field, double radiusOut, double radiusIn) {
+	public HoleFertility(double peak, double field, double radiusOut, double radiusIn) {
 		this.peak = peak;
 		this.field = field;
 		this.radiusOut = radiusOut;
@@ -71,9 +72,5 @@ public class HoleFertility extends Fertility {
 		} else {
 			return field;
 		}
-	}
-
-	public static HoleFertility get(double peak, double field, double radiusOut, double radiusIn) {
-		return new HoleFertility(peak, field, radiusOut, radiusIn);
 	}
 }

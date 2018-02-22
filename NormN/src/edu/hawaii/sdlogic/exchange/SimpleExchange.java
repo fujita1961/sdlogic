@@ -24,6 +24,19 @@ public class SimpleExchange implements Exchange {
 		memorized = false;
 	}
 
+	private void checkSatisfy(Actor actor) {
+		if(Env.DEBUG) {
+			for(int i = 0; i < Env.roles; i++) {
+				OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
+				double outcome = otr.getOutput();
+				if(outcome < Env.liveCondition - Env.EPSILON) {
+					System.err.println(outcome);;
+					throw new RuntimeException("Satisfy check error");
+				}
+			}
+		}
+	}
+
 	/**
 	 * actors are categorized into satisfied and poor actors.
 	 * @param satisfiedActors
@@ -31,25 +44,28 @@ public class SimpleExchange implements Exchange {
 	 * @param extras
 	 */
 	protected void categorizeActors(Set<Actor> satisfiedActors, Set<Actor> poorActors, List<Actor>[] extras) {
-		double[] outputs = new double[Env.roles];
-		double liveCondition = Env.liveCondition * Env.roles;
+		int roles = Env.roles + Env.stockRoles;
+
+		double[] outputs = new double[roles];
+		double liveCondition = Env.liveCondition * roles;
 
 		for(Actor actor: Env.actorList) {
-			double total = 0;
+			// double total = 0;
 
 			boolean satisfy = true;
 			for(int k = 0; k < Env.roles; k++) {
 				outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
-				total += outputs[k];
+				// total += outputs[k];
 				if(outputs[k] < Env.liveCondition) {
 					satisfy = false;
 				}
 			}
 
-			if(total > liveCondition) {
+			// if(total > liveCondition) {
 				if(satisfy) {
 					// complete satisfaction
 					satisfiedActors.add(actor);
+					checkSatisfy(actor);
 				} else {
 					// partial satisfaction
 					poorActors.add(actor);
@@ -59,11 +75,30 @@ public class SimpleExchange implements Exchange {
 							extras[k].add(actor);
 						}
 					}
+
+					for(int k = 0; k < Env.stockRoles; k++) {
+						double value = actor.getOperantResource(Env.roleNames[Env.roles + k]).getOutput();
+						// 0.1 is tentative
+						if(value > 0.1) {
+							extras[Env.roles + k].add(actor);
+						}
+					}
 				}
+
+				/*
+				for(int k = 0; k < Env.valueRoles; k++) {
+					// 0.1 is tamporal value setting.
+					if(outputs[Env.roles + k] >= 0.1) {
+						extras[Env.roles + k].add(actor);
+					}
+				}
+				*/
+			/*
 			} else {
 				// complete poor
 				poorActors.add(actor);
 			}
+			*/
 		}
 	}
 
@@ -100,16 +135,294 @@ public class SimpleExchange implements Exchange {
 		return capability;
 	}
 
+	public void exchangeSurplus(Actor actor, Set<Actor> satisfiedActors, Set<Actor> poorActors,
+			int[] exchangerIndex, List<Actor>[] extras,
+			int iterationStart,	double exchangeRate, double searchLimit) {
+		// exchange capability with collaboration
+		double exchangeCapability = calculateExchangeCapability(actor);
+
+		int roles = Env.roles + Env.stockRoles;
+
+		if(memorized) {
+			for(int i = 0; i < Env.stockRoles; i++) {
+				exchangerIndex[Env.roles + i] = 0;
+				// tentative;
+				// actor.getExchangers()[i].clear();
+			}
+		}
+
+		double[] extraVolume = new double[roles];
+
+		// how many resources are overflowed over the live condition.
+		int extraCount = 0;
+		// int surplusVolume = 0;
+		// int stockVolume = 0;
+
+		for(int j = 0; j < Env.roles; j++) {
+			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[j]);
+			double ownOutcome = ownOtr.getOutput();
+			double diff = ownOutcome - Env.liveCondition;
+			if(diff > 0) {
+				extraVolume[j] = diff;
+				extraCount++;
+				// surplusVolume += diff;
+			} else {
+				extraVolume[j] = 0;
+			}
+		}
+
+		for(int j = 0; j < Env.stockRoles; j++) {
+			int jj = Env.roles + j;
+			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[jj]);
+			double ownOutcome = ownOtr.getOutput();
+
+			if(ownOutcome < -Env.EPSILON)
+				System.out.println("Strange at 166");
+
+			extraVolume[jj] = ownOutcome;
+			// stockVolume += ownOutcome;
+		}
+
+		for(int i = iterationStart; extraCount != 0 && i < Env.searchIteration; i++) {
+			int originalIndex = -1;
+			double max = 0;
+			for(int k = 0; k < Env.roles; k++) {
+				double diff0;
+				if(Env.enableStoring2) {
+					diff0 = extraVolume[k] - extraVolume[Env.roles + k] * Env.storeRate;
+				} else {
+					diff0 = extraVolume[k] - extraVolume[Env.roles + k];
+				}
+				if(diff0 > max) {
+					max = diff0;
+					originalIndex = k;
+				}
+			}
+
+			if(originalIndex == -1) break;
+
+			/*
+			// original volumme for maximizing value
+			double payoffVolume = (surplusVolume - stockVolume) / (1 + exchangeRate);
+
+			if(payoffVolume <= 0) {
+				break;
+			}
+			*/
+
+			int stockIndex = Env.roles + originalIndex;
+
+			if(extras[stockIndex].isEmpty()) {
+				break;
+			}
+
+			Actor partner = null;
+			LinkedList<Actor> exchangers = null;
+			if(memorized) {
+				exchangers = actor.getExchangers()[stockIndex];
+				try {
+					partner = exchangers.get(exchangerIndex[stockIndex]);
+					if(extras[stockIndex].contains(partner)) {
+						exchangerIndex[stockIndex]++;
+					} else {
+						exchangers.remove(partner);
+						partner = null;
+					}
+				} catch (IndexOutOfBoundsException e) {
+					partner = null;
+				}
+			}
+
+			if(partner == null) {
+				// pick up a candidate of exchanging parner.
+				int index = Env.rand.nextInt(extras[stockIndex].size());
+				partner = extras[stockIndex].get(index);
+				if(memorized && !exchangers.contains(partner)) {
+					exchangers.addFirst(partner);
+					exchangerIndex[stockIndex]++;
+				}
+			}
+
+			double distance = actor.distance(partner);
+
+			// distance must be less than the search limit.
+			if(distance < searchLimit * exchangeCapability) {
+				searchLimit -= distance / exchangeCapability;
+
+				OperantResource partnerStockOtr = partner.getOperantResource(Env.roleNames[stockIndex]);
+				double partnerStockVolume = partnerStockOtr.getOutput();
+
+				if(partnerStockVolume < -Env.EPSILON) {
+					System.out.println("Strange at 256");
+				}
+
+				boolean endFlag = false;
+
+				int satisfiedCount = 0;
+				for(int j = 0; j < Env.roles; j++) {
+					OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[j]);
+					double partnerOriginalVolume = partnerOtr.getOutput();
+
+					// original amount that partner wants (negative value)
+					double diff = partnerOriginalVolume - Env.liveCondition;
+					if(diff < 0) {
+						if(!Env.enableStoring2) {
+							// original amount that actor can pay
+							double payoff = extraVolume[j];
+
+							// original amount that partner can pay
+							double volume = partnerStockVolume / exchangeRate;
+
+							if(payoff > -diff) {
+								if(-diff > volume) {
+									endFlag = true;
+								} else {
+									volume = -diff;
+									satisfiedCount++;
+								}
+							} else {
+								if(payoff > volume) {
+									endFlag = true;
+								} else {
+									volume = payoff;
+									extraCount--;
+								}
+							}
+							partnerStockVolume -= volume * exchangeRate;
+
+							if(partnerStockVolume < -Env.EPSILON) {
+								System.out.println("Strange at 294");
+							}
+
+							partnerOtr.addOutput(volume);
+							extraVolume[stockIndex] += volume * exchangeRate;
+
+							if(extraVolume[stockIndex] < -Env.EPSILON)
+								System.out.println("Strange at 278");
+
+							extraVolume[j] -= volume;
+							if(extraVolume[j] < -Env.EPSILON)
+								System.out.println("Strange at 295");
+
+							if(endFlag) {
+								extras[stockIndex].remove(partner);
+								break;
+							}
+						} else {
+							// original amount that actor wants
+							double payoff = 0;
+
+							if(j == originalIndex) {
+								// calculate payoff point
+								payoff = (extraVolume[originalIndex] - extraVolume[stockIndex] * Env.storeRate) / (1 + exchangeRate);
+							} else {
+								// original maximum amount that actor can pay
+								payoff = extraVolume[j] - extraVolume[Env.roles + j] * Env.storeRate;
+								// maximum original amount that actor wants
+								double payoff0 = (extraVolume[originalIndex] - extraVolume[stockIndex] * Env.storeRate) / exchangeRate;
+								if(payoff > payoff0) {
+									payoff = payoff0;
+								}
+							}
+
+							if(payoff < 0) {
+								payoff = 0;
+							}
+
+							// trading volume
+							double volume = partnerStockVolume * Env.storeRate / exchangeRate;
+
+							if(volume < -Env.EPSILON) {
+								System.out.println("Strange at 332");
+							}
+
+							if(payoff > -diff) {
+								if(-diff > volume) {
+									endFlag = true;
+								} else {
+									volume = -diff;
+									satisfiedCount++;
+								}
+							} else {
+								if(payoff > volume) {
+									endFlag = true;
+								} else {
+									volume = payoff;
+									extraCount--;
+								}
+							}
+							partnerStockVolume -= volume / Env.storeRate * exchangeRate;
+
+							if(partnerStockVolume < -Env.EPSILON) {
+								System.out.println("Strange at 349");
+							}
+
+							partnerOtr.addOutput(volume);
+							extraVolume[stockIndex] += volume / Env.storeRate * exchangeRate;
+							if(extraVolume[stockIndex] < -Env.EPSILON)
+								System.out.println("Strange at 327");
+							extraVolume[j] -= volume;
+							if(extraVolume[j] < -Env.EPSILON)
+								System.out.println("Strange at 341");
+
+
+							if(endFlag) {
+								extras[stockIndex].remove(partner);
+								break;
+							}
+						}
+					} else {
+						satisfiedCount++;
+					}
+				}
+
+				partnerStockOtr.setOutput(partnerStockVolume);
+
+				if(satisfiedCount == Env.roles) {
+					satisfiedActors.add(partner);
+					checkSatisfy(partner);
+					poorActors.remove(partner);
+					for(int k = 0; k < roles; k++) {
+						extras[k].remove(partner);
+					}
+				}
+
+				// no more extra amount of resources
+				if(extraCount == 0) {
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+
+		for(int j = 0; j < Env.roles; j++) {
+			if(extraVolume[j] < -Env.EPSILON)
+				System.out.println("Volume is negative!");
+			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[j]);
+			ownOtr.setOutput(extraVolume[j] + Env.liveCondition);
+		}
+
+		for(int j = 0; j < Env.stockRoles; j++) {
+			if(extraVolume[Env.roles + j] < -Env.EPSILON)
+				System.out.println("Stock Volume is negative!");
+			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[Env.roles + j]);
+			ownOtr.setOutput(extraVolume[Env.roles + j]);
+		}
+	}
+
 	/**
 	 * exchange output method
 	 */
 	@Override
 	public void exchange(Set<Actor> satisfiedActors) {
+		int roles = Env.roles + Env.stockRoles;
+
 		// actors who have extra amount of resources
 		@SuppressWarnings("unchecked")
-		List<Actor>[] extras = new ArrayList[Env.roles];
+		List<Actor>[] extras = new ArrayList[roles];
 
-		for(int k = 0; k < Env.roles; k++) {
+		for(int k = 0; k < roles; k++) {
 			extras[k] = new ArrayList<Actor>();
 		}
 
@@ -119,13 +432,20 @@ public class SimpleExchange implements Exchange {
 
 		categorizeActors(satisfiedActors, poorActors, extras);
 
+		/*
+		for(int i = 0; i < roles; i++) {
+			System.out.print(extras[i].size() + " ");
+		}
+		System.out.println();
+		*/
+
 		// copy of satisfied actor list
 		originalSatisfiedActors.addAll(satisfiedActors);
 
 		// System.out.println(Env.actorList.size());
 		// System.out.println(poorActors.size());
 
-		double[] outputs = new double[Env.roles];
+		double[] outputs = new double[roles];
 
 		// List variables for learning
 		List<String> inc = null;
@@ -144,7 +464,7 @@ public class SimpleExchange implements Exchange {
 		double[] partnerOutputs = new double[Env.roles];
 		int[] exchangerIndex = null;
 		if(memorized) {
-			exchangerIndex = new int[Env.roles];
+			exchangerIndex = new int[roles];
 		}
 
 		int size = Env.actorList.size();
@@ -158,6 +478,11 @@ public class SimpleExchange implements Exchange {
 				dec.clear();
 			}
 
+			double exchangeRate = Env.exchangeRate;
+
+			OperantResource exchangeOtr = actor.getOperantResource(Term.EXCHANGING);
+			exchangeRate *= (1 + exchangeOtr.getEffort() * exchangeOtr.getSkill());
+
 			if(satisfiedActors.contains(actor)) {
 				// actor satisfies the living condition
 
@@ -169,13 +494,23 @@ public class SimpleExchange implements Exchange {
 						dec.add(Term.EXCHANGING);
 						actor.update(inc, dec);
 					}
-
+					originalSatisfiedActors.remove(actor);
 					// need not exchange
+				}
+
+				// for value added role
+				if(Env.stockRoles > 0) {
+					// the maximum distance for searching
+					double searchLimit = Env.searchLimit;
+
+					exchangeSurplus(actor, satisfiedActors, poorActors, exchangerIndex, extras,
+							0,	exchangeRate, searchLimit);
+
 				}
 			} else if(poorActors.contains(actor)) {
 				// actor does not satisfy the living condition
 
-				for(int k = 0; k < Env.roles; k++) {
+				for(int k = 0; k < roles; k++) {
 					outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				}
 
@@ -186,7 +521,7 @@ public class SimpleExchange implements Exchange {
 				double exchangeCapability = calculateExchangeCapability(actor);
 
 				if(memorized) {
-					for(int i = 0; i < Env.roles; i++) {
+					for(int i = 0; i < roles; i++) {
 						exchangerIndex[i] = 0;
 						// tentative;
 						// actor.getExchangers()[i].clear();
@@ -194,7 +529,130 @@ public class SimpleExchange implements Exchange {
 				}
 
 				// search exchanging partners
-				for(int i = 0; i < Env.searchIteration; i++) {
+
+				int currentIteration = 0;
+
+				for(currentIteration = 0; currentIteration < Env.searchIteration; currentIteration++) {
+					// pick up a candidate of exchanging parner.
+					Actor partner = null;
+					LinkedList<Actor> exchangers = null;
+
+					boolean contFlag = false;
+					boolean breakFlag = false;
+
+					double total = 0;
+					for(int k = 0; k < Env.roles; k++) {
+						total += outputs[k];
+					}
+
+					// If Env.stockRoles > 0 and total does not satisfy the living conditions,
+					if(total < Env.liveCondition * Env.roles) {
+						for(int k = 0; k < Env.stockRoles && !satisfiedActors.isEmpty(); k++) {
+
+							int stockIndex = Env.roles + k;
+
+							if(outputs[stockIndex] > 0) {
+								if(memorized) {
+									exchangers = actor.getExchangers()[stockIndex];
+
+									try {
+										partner = exchangers.get(exchangerIndex[stockIndex]);
+										if(satisfiedActors.contains(partner)) {
+											exchangerIndex[stockIndex]++;
+										} else {
+											exchangers.remove(partner);
+											partner = null;
+										}
+									} catch (IndexOutOfBoundsException e) {
+										partner = null;
+									}
+								}
+
+								if(partner == null) {
+									// pick up a candidate of exchanging parner.
+									while(true) {
+										int index = Env.rand.nextInt(Env.actorList.size());
+										partner = Env.actorList.get(index);
+										if(satisfiedActors.contains(partner)) {
+										break;
+										}
+									}
+									if(memorized && !exchangers.contains(partner)) {
+										exchangers.addFirst(partner);
+										exchangerIndex[stockIndex]++;
+									}
+								}
+
+								double distance = actor.distance(partner);
+
+								// distance must be less than the search limit.
+								if(distance < searchLimit * exchangeCapability) {
+									searchLimit -= distance / exchangeCapability;
+
+									for(int j = 0; j < Env.roles; j++) {
+										OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[j]);
+										double partnerOriginalVolume = partnerOtr.getOutput();
+
+										// diff must be positive or zero
+										double diff = partnerOriginalVolume - Env.liveCondition;
+
+										if(diff > 0) {
+											if(!Env.enableStoring2) {
+												if(outputs[stockIndex] * exchangeRate > diff) {
+													outputs[stockIndex] -= diff / exchangeRate;
+													outputs[j] += diff;
+													partnerOtr.setOutput(Env.liveCondition);
+													OperantResource valueOtr = partner.getOperantResource(Env.roleNames[stockIndex]);
+													valueOtr.addOutput(diff / exchangeRate);
+												} else {
+													outputs[j] += outputs[stockIndex] * exchangeRate;
+													partnerOtr.addOutput(-outputs[stockIndex] * exchangeRate);
+													OperantResource valueOtr = partner.getOperantResource(Env.roleNames[stockIndex]);
+													valueOtr.addOutput(outputs[stockIndex]);
+													outputs[stockIndex] = 0;
+													extras[stockIndex].remove(actor);
+													break;
+												}
+											} else {
+												// Env.enableExchanging2 == true
+
+												OperantResource partnerStockOtr = partner.getOperantResource(Env.roleNames[stockIndex]);
+
+												// trading stock volume
+												double payoff = (diff - partnerStockOtr.getOutput() * Env.storeRate) * exchangeRate / (1 + exchangeRate);
+
+												if(outputs[stockIndex] > payoff / Env.storeRate) {
+													outputs[stockIndex] -= payoff / Env.storeRate;
+													outputs[j] += payoff / exchangeRate;
+													partnerOtr.addOutput(- payoff / exchangeRate);
+													partnerStockOtr.addOutput(payoff / Env.storeRate);
+												} else {
+													outputs[j] += outputs[stockIndex] * Env.storeRate / exchangeRate;
+													partnerOtr.addOutput(-outputs[stockIndex] * Env.storeRate / exchangeRate);
+													partnerStockOtr.addOutput(outputs[stockIndex]);
+													outputs[stockIndex] = 0;
+													extras[stockIndex].remove(actor);
+													break;
+												}
+											}
+										}
+									}
+								} else {
+									breakFlag = true;
+									break;
+								}
+
+								contFlag = true;;
+								currentIteration++;
+							}
+						}
+
+						if(breakFlag) {
+							break;
+						} else if(contFlag) {
+							continue;
+						}
+					}
 
 					// find the type with the minimum output
 					double min = outputs[0];
@@ -212,9 +670,6 @@ public class SimpleExchange implements Exchange {
 					// if no partner exists, exit the loop
 					if(extras[minIndex].isEmpty()) break;
 
-					// pick up a candidate of exchanging parner.
-					Actor partner = null;
-					LinkedList<Actor> exchangers = null;
 					if(memorized) {
 						exchangers = actor.getExchangers()[minIndex];
 
@@ -260,8 +715,8 @@ public class SimpleExchange implements Exchange {
 							if(Env.exchangeRate > 1.0) {
 								double diff = partnerOutputs[k] - Env.liveCondition;
 								if(diff < 0) {
-									sum += diff * actor.getExchangeRate();
-									minus += diff * actor.getExchangeRate();
+									sum += diff * exchangeRate;
+									minus += diff * exchangeRate;
 								} else {
 									sum += diff;
 								}
@@ -290,6 +745,12 @@ public class SimpleExchange implements Exchange {
 									if(plus > 0) {
 										if(minus0 + plus >= 0) {
 											partner.getOperantResource(Env.roleNames[k]).addOutput(minus0);
+											if(Env.DEBUG) {
+												if(partner.getOperantResource(Env.roleNames[k]).getOutput() < Env.liveCondition - Env.EPSILON) {
+													System.err.printf("minus0 = %f, plus = %f%n", minus0, plus);
+													System.err.println("Strange at 721");
+												}
+											}
 											minus0 = 0;
 										} else {
 											partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
@@ -304,8 +765,9 @@ public class SimpleExchange implements Exchange {
 								}
 							}
 
-							// partner actrr becomes to satisfy the living condition.
+							// partner actor becomes to satisfy the living condition.
 							satisfiedActors.add(partner);
+							checkSatisfy(partner);
 
 							Env.eval.evaluate(partner);
 
@@ -340,8 +802,15 @@ public class SimpleExchange implements Exchange {
 
 							if(satisfy) {
 								// focal actor reaches at the satisfing condition
+								if(Env.DEBUG) {
+									for(int k = 0; k < roles; k++) {
+										actor.getOperantResource(Env.roleNames[k]).setOutput(outputs[k]);
+									}
+								}
+
 								poorActors.remove(actor);
 								satisfiedActors.add(actor);
+								checkSatisfy(actor);
 
 								for(int k = 0; k < Env.roles; k++) {
 									if(extras[k].contains(actor)) {
@@ -361,6 +830,9 @@ public class SimpleExchange implements Exchange {
 									actor.update(inc, dec);
 								}
 
+								// special loop control
+								// after satisfaction, the actor can obtain value added resources.
+								currentIteration--;
 								break;
 							}
 						}
@@ -382,8 +854,15 @@ public class SimpleExchange implements Exchange {
 				}
 
 				// put back to the output of operant resources
-				for(int k = 0; k < Env.roles; k++) {
+				for(int k = 0; k < roles; k++) {
 					actor.getOperantResource(Env.roleNames[k]).setOutput(outputs[k]);
+				}
+
+				if(satisfiedActors.contains(actor) && Env.stockRoles > 0) {
+
+					exchangeSurplus(actor, satisfiedActors, poorActors, exchangerIndex, extras,
+							currentIteration, exchangeRate, searchLimit);
+
 				}
 
 				Env.eval.evaluate(actor);
@@ -393,7 +872,8 @@ public class SimpleExchange implements Exchange {
 
 				System.err.println("This code must not be used in the current version!");
 
-				for(int k = 0; k < Env.roles; k++) {
+				/*
+				for(int k = 0; k < roles; k++) {
 					outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				}
 
@@ -405,7 +885,7 @@ public class SimpleExchange implements Exchange {
 					double min = outputs[0];
 					int minIndex = 0;
 
-					for(int k = 1; k < Env.roles; k++) {
+					for(int k = 1; k < roles; k++) {
 						if(outputs[k] < min) {
 							min = outputs[k];
 							minIndex = k;
@@ -424,7 +904,7 @@ public class SimpleExchange implements Exchange {
 
 						boolean satisfy = true;
 
-						for(int k = 0; k < Env.roles; k++) {
+						for(int k = 0; k < roles; k++) {
 							partnerOutputs[k] = partner.getOperantResource(Env.roleNames[k]).getOutput();
 
 							if(partnerOutputs[k] + outputs[k] < Env.liveCondition * 2) {
@@ -434,7 +914,7 @@ public class SimpleExchange implements Exchange {
 						}
 
 						if(satisfy) {
-							for(int k = 0; k < Env.roles; k++) {
+							for(int k = 0; k < roles; k++) {
 								if(partnerOutputs[k] >= Env.liveCondition) {
 									extras[k].remove(partner);
 								}
@@ -457,7 +937,7 @@ public class SimpleExchange implements Exchange {
 								incPartner.clear();
 								decPartner.clear();
 
-								for(int k = 0; k < Env.roles; k++) {
+								for(int k = 0; k < roles; k++) {
 									if(partnerOutputs[k] >= Env.liveCondition) {
 										incPartner.add(Env.roleNames[k]);
 									} else {
@@ -484,6 +964,7 @@ public class SimpleExchange implements Exchange {
 						break;
 					}
 				}
+				*/
 			}
 		}
 	}

@@ -84,6 +84,11 @@ public class Env {
 	public static int roles = 2;
 
 	/**
+	 * number of stocking resources
+	 */
+	public static int stockRoles = 0;
+
+	/**
 	 * names of operant resources
 	 * The length of this array is more than Env.types,
 	 * because this array involves Exchanging and Collaborating operant resources.
@@ -99,6 +104,26 @@ public class Env {
 	 * enable collaborating operant resource
 	 */
 	public static boolean enableCollaborating = false;
+
+	/**
+	 * enable storing operant resource
+	 */
+	public static boolean enableStoring = false;
+
+	/**
+	 * enable exchanging operant resource
+	 */
+	public static boolean enableStoring2 = false;
+
+	/**
+	 * enable exchanging operant resource
+	 */
+	public static double storeRate = 4.0;
+
+	/**
+	 * reduction rate for stock
+	 */
+	public static double reductionRate = 1.0;
 
 	/**
 	 * share rate for share cooperative mode
@@ -233,6 +258,11 @@ public class Env {
 	public static int periods = 1000;
 
 	/**
+	 * the number of simulation periods
+	 */
+	public static boolean stopAtMax = false;
+
+	/**
 	 * the number of repeticion for executing simulations
 	 */
 	public static int repeats = 1;
@@ -349,6 +379,11 @@ public class Env {
 	/**
 	 * print interval
 	 */
+	public static boolean printParameterFlag = true;
+
+	/**
+	 * print interval
+	 */
 	public static int printInterval = 1;
 
 	/**
@@ -385,4 +420,8 @@ public class Env {
 	 * entropy class
 	 */
 	public static Entropy entropy = new Entropy();
+
+	public static boolean DEBUG = false;
+
+	public static double EPSILON = 0.000001;
 }

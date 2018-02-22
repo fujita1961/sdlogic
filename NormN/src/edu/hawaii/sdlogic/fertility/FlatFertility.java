@@ -6,9 +6,9 @@ package edu.hawaii.sdlogic.fertility;
  *
  */
 public class FlatFertility extends Fertility {
-	private static FlatFertility flatCapacity = new FlatFertility();
+	public static FlatFertility flatCapacity = new FlatFertility();
 
-	protected FlatFertility() {
+	public FlatFertility() {
 	}
 
 	/**
@@ -18,13 +18,5 @@ public class FlatFertility extends Fertility {
 	@Override
 	public double calculate(int x, int y) {
 		return 1;
-	}
-
-	/**
-	 * sattic method for getting the singleton instance.
-	 * @return flatCapacity instance;
-	 */
-	public static FlatFertility get() {
-		return flatCapacity;
 	}
 }

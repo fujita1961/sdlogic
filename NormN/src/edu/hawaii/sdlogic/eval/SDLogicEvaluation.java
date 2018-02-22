@@ -26,6 +26,17 @@ public class SDLogicEvaluation implements Evaluation {
 			}
 		}
 
+		// value added roles
+		if(min > Env.liveCondition) {
+			min = Env.liveCondition;
+
+			for(int i = 0; i < Env.stockRoles; i++) {
+				OperantResource otr = actor.getOperantResource(Env.roleNames[Env.roles + i]);
+				double value = otr.getOutput();
+				min += value;
+			}
+		}
+
 		actor.setPerformance(min);
 
 		return min;

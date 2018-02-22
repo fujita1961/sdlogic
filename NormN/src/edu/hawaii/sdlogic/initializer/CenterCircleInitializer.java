@@ -20,6 +20,10 @@ public class CenterCircleInitializer extends Initializer {
 		this.radius = radius;
 	}
 
+	public CenterCircleInitializer() {
+		this(5);
+	}
+
 	/**
 	 * init method
 	 */

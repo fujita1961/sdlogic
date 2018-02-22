@@ -19,20 +19,47 @@ public class Loop {
 	 * @param satisfiedActors
 	 */
 	public static void oneTurn(Set<Actor> satisfiedActors, int turn) {
+		int roles = Env.roles + Env.stockRoles;
+
 		for(Actor actor: Env.actorList) {
 			actor.setPerformance(0);
 		}
 
-		// @SuppressWarnings("unused")
-		double totalOutput = 0;
-		int totalActors = 0;
-
 		// clear share value
 		if(Env.shareRate > 0) {
 			for(Actor actor: Env.actorList) {
-				for(int i = 0; i < Env.roles; i++) {
+				for(int i = 0; i < roles; i++) {
 					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 					ort.setShare(0.0d);
+				}
+			}
+		}
+
+		// clear share value
+		if(Env.enableStoring || Env.enableStoring2) {
+			for(Actor actor: Env.actorList) {
+				for(int i = 0; i < Env.stockRoles; i++) {
+					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
+					OperantResource stockOrt = actor.getOperantResource(Env.roleNames[Env.roles + i]);
+					double stockOutput = stockOrt.getOutput();
+					double volume = stockOutput;
+					if(volume < -Env.EPSILON)
+						System.out.println("Stock Strange");
+					double output = ort.getOutput();
+					if(output < -Env.EPSILON)
+						System.out.println("Output Strange");
+					if(Env.enableStoring2) {
+						if(output - Env.liveCondition < volume * Env.storeRate) {
+							volume = output - Env.liveCondition;
+						} else {
+							volume *= Env.storeRate;
+						}
+					}
+					double rate = Env.reductionRate;
+					ort.setOutput(volume * rate);
+					ort.setOutput0(volume * rate);
+					stockOrt.setOutput(0);
+					stockOrt.setOutput0(0);
 				}
 			}
 		}
@@ -40,19 +67,6 @@ public class Loop {
 		for(Actor actor: Env.actorList) {
 			if(actor.getPerformance() == 0) {
 				Env.output.calculateAll(actor);
-
-				{
-					int x = actor.getX() - Env.mapWidth / 2;;
-					int y = actor.getY() - Env.mapHeight / 2;
-
-					if(x * x + y * y > 100) {
-						totalActors++;
-						for(int k = 0; k < Env.roles; k++) {
-							totalOutput += actor.getOperantResource(Env.roleNames[k]).getOutput();
-						}
-
-					}
-				}
 
 				Env.eval.evaluate(actor);
 			}
@@ -106,7 +120,7 @@ public class Loop {
 		// add share value
 		if(Env.shareRate > 0) {
 			for(Actor actor: Env.actorList) {
-				for(int i = 0; i < Env.roles; i++) {
+				for(int i = 0; i < roles; i++) {
 					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 					double share = ort.getShare();
 					ort.addOutput(share);
@@ -119,51 +133,96 @@ public class Loop {
 			Env.exchange.exchange(satisfiedActors);
 		}
 
-		int[] population = new int[Env.roleNames.length + 1];
-		double[][] outcome = new double[Env.roleNames.length + 1][Env.roles];
 
+		/*
 		for(Actor actor: Env.actorList) {
-			boolean found = false;
-			for(int i = 0; i < Env.roleNames.length; i++) {
-				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
-				if(ort.getEffort() > 0.66) {
-					population[i]++;
-					found = true;
-					for(int j = 0; j < Env.roles; j++) {
-						OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
-						outcome[i][j] += ort2.getOutput0();
+			double sum = 0;
+
+			for(int i = 0; i < Env.valueRoles; i++) {
+				sum += actor.getOperantResource(Env.roleNames[Env.roles + i]).getOutput();
+			}
+			actor.addLifeSpan(sum / 4);
+		}
+		*/
+
+		/*
+		if((turn + 1) % Env.printInterval == 0 && Env.printStatistics) {
+			double totalOutput = 0;
+			double totalOutput1 = 0;
+			double totalValue = 0;
+			int totalActors = 0;
+
+			int[] population = new int[Env.roleNames.length + 1];
+			double[][] outcome = new double[Env.roleNames.length + 1][roles];
+
+			for(Actor actor: Env.actorList) {
+				boolean found = false;
+				for(int i = 0; i < Env.roleNames.length; i++) {
+					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
+					if(ort.getEffort() > 0.66) {
+						population[i]++;
+						found = true;
+						for(int j = 0; j < roles; j++) {
+							OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
+							outcome[i][j] += ort2.getOutput0();
+						}
+						break;
 					}
-					break;
+				}
+				if(!found) {
+					population[Env.roleNames.length]++;
+					for(int j = 0; j < roles; j++) {
+						OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
+						outcome[Env.roleNames.length][j] += ort2.getOutput0();
+					}
+				}
+
+				{
+					int x = actor.getX() - Env.mapWidth / 2;;
+					int y = actor.getY() - Env.mapHeight / 2;
+
+					if(x * x + y * y > 100) {
+						totalActors++;
+						for(int k = 0; k < Env.roles; k++) {
+							totalOutput += actor.getOperantResource(Env.roleNames[k]).getOutput0();
+							totalOutput1 += actor.getOperantResource(Env.roleNames[k]).getOutput();
+						}
+
+						totalValue += actor.getOperantResource(Env.roleNames[Env.roles]).getOutput();
+					}
 				}
 			}
-			if(!found) {
-				population[Env.roleNames.length]++;
-				for(int j = 0; j < Env.roles; j++) {
-					OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
-					outcome[Env.roleNames.length][j] += ort2.getOutput0();
+
+			// System.out.println("average of output: " + totalOutput / Env.actorList.size() / Env.types);
+			System.out.printf("%d ", Env.actorList.size());
+			for(int i = 0; i < Env.roleNames.length + 1; i++) {
+				System.out.printf("%d ", population[i]);
+				for(int j = 0; j < roles; j++) {
+					if(population[i] != 0) {
+						System.out.printf("%8.6f ", outcome[i][j] / population[i]);
+					} else {
+						System.out.print("0.0 ");
+					}
 				}
+			}
+			// System.out.printf("%8.6f%n", totalOutput / Env.actorList.size() / Env.types);
+			if(totalActors > 0) {
+				System.out.printf("%8.6f ", totalOutput / totalActors / Env.roles);
+				System.out.printf("%8.6f ", totalOutput1 / totalActors / Env.roles);
+				System.out.printf("%8.6f ", totalValue / totalActors);
+			} else {
+				System.out.printf("%8.6f %8.6f %8.6f ", 0.0d, 0.0d, 0.0d);
 			}
 		}
+		*/
 
-		if((turn + 1) % Env.printInterval == 0) {
-			if(Env.printStatistics) {
-				// System.out.println("average of output: " + totalOutput / Env.actorList.size() / Env.types);
-				System.out.printf("%d ", Env.actorList.size());
-				for(int i = 0; i < Env.roleNames.length + 1; i++) {
-					System.out.printf("%d ", population[i]);
-					for(int j = 0; j < Env.roles; j++) {
-						if(population[i] != 0) {
-							System.out.printf("%8.6f ", outcome[i][j] / population[i]);
-						} else {
-							System.out.print("0.0 ");
-						}
-					}
-				}
-				// System.out.printf("%8.6f%n", totalOutput / Env.actorList.size() / Env.types);
-				if(totalActors > 0) {
-					System.out.printf("%8.6f ", totalOutput / totalActors / Env.roles);
-				} else {
-					System.out.printf("%8.6f ", 0.0d);
+		if(Env.DEBUG) {
+			for(Actor actor: satisfiedActors) {
+				for(int i = 0; i < Env.roleNames.length; i++) {
+					OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
+					double volume = otr.getOutput();
+					if(volume < -Env.EPSILON)
+						System.out.println("Satisfied Actor has negative volume !");
 				}
 			}
 		}
@@ -188,12 +247,14 @@ public class Loop {
 				}
 			}
 
+			/*
 			if((turn + 1) % Env.printInterval == 0) {
 				if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
 						|| Env.printStatistics || Env.printExchangeLinksFlag) {
 					System.out.print((turn + 1) + " ");
 				}
 			}
+			*/
 
 			// Click mouse if you want to pend loop execution.
 			int x = Canvas.getPointedX();
@@ -205,10 +266,14 @@ public class Loop {
 					Env.draw.drawRelation(x, y);
 				}
 
+				Print.printActor(x, y);
+
 				// wait for click
 				Canvas.waitForPoint();
 				x = Canvas.getPointedX();
 				y = Canvas.getPointedY();
+
+				Print.printActor(x, y);
 
 				prevX = x;
 				prevY = y;
@@ -221,11 +286,13 @@ public class Loop {
 
 			oneTurn(satisfiedActors, turn);
 
-			if(Env.changePopulation && turn > 0) {
+			if(Env.changePopulation) {
 				// change population mode
 
 				List<Actor> removeActors = new ArrayList<Actor>();
 				List<Actor> addActors = new ArrayList<Actor>();
+				// int sumAge = 0;
+				// int deathForLife = 0;
 				for(Actor actor: Env.actorList) {
 					if(satisfiedActors.contains(actor)) {
 						int age = actor.incrementAge();
@@ -235,7 +302,10 @@ public class Loop {
 							// if an actor reaches the life span, the actor die.
 
 							Env.map[actor.getX()][actor.getY()] = null;
+							satisfiedActors.remove(actor);
 							removeActors.add(actor);
+							// sumAge += age;
+							// deathForLife++;
 						} else if(age % birth == 0) {
 							// if an actor does not reach the life span, it generates a child every 5 years.
 
@@ -245,23 +315,58 @@ public class Loop {
 							// the first age is given by a random value less than 5 years.
 							newActor.setAge(Env.rand.nextInt(birth));
 
-							boolean found = false;
-							for(int j = 0; j < 5; j++) {
-								int x0 = Env.rand.nextInt(Env.mapWidth);
-								int y0 = Env.rand.nextInt(Env.mapHeight);
+							boolean success = false;
 
-								if(Env.map[x0][y0] == null) {
-									Env.map[x0][y0] = newActor;
+							for(int j = 0; j < 10 && !success; j++) {
+								int ix;
+								int iy;
+
+								int x0 = actor.getX();
+								int y0 = actor.getY();
+
+								// ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+								// iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+
+								ix = (int)(Env.rand.nextGaussian() * Env.windowSize);
+								iy = (int)(Env.rand.nextGaussian() * Env.windowSize);
+
+								// new location
+								int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
+								int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
+
+								Actor isEmpty = Env.map[xx][yy];
+
+								if(isEmpty == null) {
+									// empty location is found.
+									Env.map[xx][yy] = newActor;
 									addActors.add(newActor);
-									newActor.setXY(x0, y0);
-									found = true;
+									newActor.setXY(xx, yy);
+									success = true;
 									break;
 								}
 							}
 
 							// if empty space is found, a new child imitate his parent.
-							if(found) {
+							if(success) {
+								if(Env.DEBUG) {
+									for(int i = 0; i < Env.roleNames.length; i++) {
+										OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
+										double outcome = ort.getOutput();
+										if(outcome < 0) {
+											System.err.println("Strange at 356");
+										}
+									}
+								}
 								newActor.imitate(actor);
+								if(Env.DEBUG) {
+									for(int i = 0; i < Env.roleNames.length; i++) {
+										OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
+										double outcome = ort.getOutput();
+										if(outcome < 0) {
+											System.err.println("Strange at 356");
+										}
+									}
+								}
 							} else {
 								Actor.reclaim(newActor);
 							}
@@ -273,16 +378,32 @@ public class Loop {
 					}
 				}
 
+				// if(deathForLife > 0) System.out.println(sumAge / deathForLife);
+
 				// remove actors
 				for(Actor actor: removeActors) {
 					Env.actorList.remove(actor);
 					Actor.reclaim(actor);
 				}
 
+				if(Env.actorList.size() != satisfiedActors.size()) {
+
+					System.err.println("Strange at 385:" + Env.actorList.size() + ", " + satisfiedActors.size());
+				}
+
 				// add new actors.
 				for(Actor actor: addActors) {
-					if(Env.actorList.size() < Env.mapWidth * Env.mapHeight * 0.5) {
+					if(Env.actorList.size() < Env.mapWidth * Env.mapHeight / 2) {
 						Env.actorList.add(actor);
+						if(Env.DEBUG) {
+							for(int i = 0; i < Env.roleNames.length; i++) {
+								OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
+								double outcome = ort.getOutput();
+								if(outcome < 0) {
+									System.err.println("Strange at 393");
+								}
+							}
+						}
 					} else {
 						Env.map[actor.getX()][actor.getY()] = null;
 						Actor.reclaim(actor);
@@ -335,44 +456,87 @@ public class Loop {
 				}
 			}
 
-			if((turn + 1) % Env.printInterval == 0) {
 
-				if(Env.printSkillLevelsFlag) {
-					Print.printSkillLevels();
-				}
-
-				if(Env.printExchangeLinksFlag) {
-					Print.printExchangeLinks();
-				}
-
-				if(Env.printEntropyFlag) {
-					Env.entropy.printMaxEntropy();
-					Env.entropy.friendEntropy();
-					Env.entropy.entropy();
-				}
-
-				if(Env.printCollaborationCountFlag) {
-					Print.printCollaborationCount();
-				}
-
-				if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
-						|| Env.printStatistics || Env.printExchangeLinksFlag) {
-					System.out.println();
-				}
+			if(Env.changePopulation && Env.stopAtMax && (Env.actorList.size() >= Env.mapWidth * Env.mapHeight / 4)) {
+				print(turn);
+				Env.draw.draw();
+				return true;
 			}
 
-			if(turn % Env.drawInterval == 0) {
+			if((turn + 1) % Env.printInterval == 0) {
+				print(turn);
+			}
+
+			if((turn + 1) % Env.drawInterval == 0) {
 				Env.draw.draw();
 			}
 
-			if(turn % Env.animationGIFInterval == 0) {
+			if((turn + 1) % Env.animationGIFInterval == 0) {
 				Canvas.writeAnimationGIF();
+			}
+
+			if(Env.DEBUG) {
+				for(Actor actor: satisfiedActors) {
+					for(int i = 0; i < Env.roleNames.length; i++) {
+						OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
+						double volume = otr.getOutput();
+						if(volume < -Env.EPSILON)
+							System.out.println("Satisfied Actor has negative volume !");
+					}
+				}
+			}
+
+			if(Env.DEBUG) {
+				for(Actor actor: Env.actorList) {
+					if(!satisfiedActors.contains(actor)) {
+						for(int i = 0; i < Env.roleNames.length; i++) {
+							OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
+							double volume = otr.getOutput();
+							if(volume < 0)
+								System.out.println("Satisfied Actor has negative volume !");
+						}
+					}
+				}
 			}
 		}
 
 		Env.draw.draw();
 
 		return true;
+	}
+
+	private static void print(int turn) {
+		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
+				|| Env.printStatistics || Env.printExchangeLinksFlag) {
+			System.out.print((turn + 1) + " ");
+		}
+
+		if(Env.printStatistics) {
+			Print.printStatistics();
+		}
+
+		if(Env.printSkillLevelsFlag) {
+			Print.printSkillLevels();
+		}
+
+		if(Env.printExchangeLinksFlag) {
+			Print.printExchangeLinks();
+		}
+
+		if(Env.printEntropyFlag) {
+			Env.entropy.printMaxEntropy();
+			Env.entropy.friendEntropy();
+			Env.entropy.entropy();
+		}
+
+		if(Env.printCollaborationCountFlag) {
+			Print.printCollaborationCount();
+		}
+
+		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
+				|| Env.printStatistics || Env.printExchangeLinksFlag) {
+			System.out.println();
+		}
 	}
 
 	public static void fin() {

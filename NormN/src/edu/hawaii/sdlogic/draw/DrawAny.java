@@ -17,6 +17,8 @@ public class DrawAny extends DrawPlane {
 	 */
 	@Override
 	public void init() {
+		initColor();
+
 		int number = 0;
 
 		if(Env.drawMap) {

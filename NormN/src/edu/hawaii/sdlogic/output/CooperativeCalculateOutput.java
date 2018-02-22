@@ -22,7 +22,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 		OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
 
 		// calculate collaborating effect
-		for(int k = 0; k < Env.roles; k++) {
+		for(int k = 0; k < Env.roles + Env.stockRoles; k++) {
 			OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[k]);
 			if(collaboOtr != null) {
 				cooperates[k] = partnerOtr.getEffort() * partnerOtr.getSkill()
@@ -52,14 +52,16 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 	}
 
 	public void calculateAll(Actor actor) {
-		OperantResource[] otrs = new OperantResource[Env.roles];
-		double[] outputs = new double[Env.roles];
-		double[] outputs0 = new double[Env.roles];
-		double[] cooperates0 = new double[Env.roles];
-		double[] cooperates1 = new double[Env.roles];
+		int roles = Env.roles + Env.stockRoles;
+
+		OperantResource[] otrs = new OperantResource[roles];
+		double[] outputs = new double[roles];
+		double[] outputs0 = new double[roles];
+		double[] cooperates0 = new double[roles];
+		double[] cooperates1 = new double[roles];
 
 		// calcuate
-		for(int i = 0; i < Env.roles; i++) {
+		for(int i = 0; i < roles; i++) {
 			otrs[i] = actor.getOperantResource(Env.roleNames[i]);
 			outputs[i] = calculate(actor, otrs[i]);
 			outputs0[i] = outputs[i];
@@ -185,7 +187,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 						if(value2 > value) {
 							// replace
-							for(int k = 0; k < Env.roles; k++) {
+							for(int k = 0; k < roles; k++) {
 								cooperates0[k] = cooperates1[k];
 							}
 							value = value2;
@@ -206,7 +208,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 					OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
 
-					for(int k = 0; k < Env.roles; k++) {
+					for(int k = 0; k < roles; k++) {
 						OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[k]);
 
 						double cooperate;
@@ -242,7 +244,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 
 					value += actorExchangeOutput;
 				} else {
-					for(int k = 0; k < Env.roles; k++) {
+					for(int k = 0; k < roles; k++) {
 						outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
 						if(Env.shareRate > 0 && partner != null) {
 							double share = outputs0[k] * Env.shareRate * cooperates0[k] / Env.friends;
@@ -252,7 +254,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 					}
 				}
 			} else {
-				for(int k = 0; k < Env.roles; k++) {
+				for(int k = 0; k < roles; k++) {
 					outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
 					if(Env.shareRate > 0 && partner != null) {
 						double share = outputs0[k] * Env.shareRate * cooperates0[k] / Env.friends;
@@ -267,7 +269,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 		}
 
 		// add fluctuation to the output
-		for(int k = 0; k < Env.roles; k++) {
+		for(int k = 0; k < roles; k++) {
 			double output = outputs[k];
 			/*
 			if(output < otrs[k].getOutput())
@@ -275,8 +277,13 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 			*/
 			output *= (1 + Env.rand.nextGaussian() * Env.sigmaOutput);
 			if(output < 0) output = 0;
-			otrs[k].setOutput(output);
-			otrs[k].setOutput0(output);
+			if(Env.enableStoring || Env.enableStoring2) {
+				otrs[k].addOutput(output);
+				otrs[k].addOutput0(output);
+			} else {
+				otrs[k].setOutput(output);
+				otrs[k].setOutput0(output);
+			}
 		}
 	}
 

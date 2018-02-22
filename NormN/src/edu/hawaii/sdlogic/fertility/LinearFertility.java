@@ -25,11 +25,11 @@ public class LinearFertility extends Fertility {
 //		Capacity.setCapacity(Term.FISH, fishCapacity);
 	}
 
-	protected LinearFertility() {
+	public LinearFertility() {
 		this(1.0, 0.25);
 	}
 
-	protected LinearFertility(double a, double b) {
+	public LinearFertility(double a, double b) {
 		angle = a;
 		peak = b;
 	}
@@ -39,9 +39,5 @@ public class LinearFertility extends Fertility {
 		double x0 = ((double)((x + Env.mapWidth * (1 - peak)) % Env.mapWidth)) * 2 /  Env.mapWidth;
 		double x1 = Math.abs(x0 - 1);
 		return (x1 - 0.5) * angle * 1 + 1;
-	}
-
-	public static LinearFertility get(double a, double b) {
-		return new LinearFertility(a, b);
 	}
 }

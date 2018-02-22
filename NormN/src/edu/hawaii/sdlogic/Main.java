@@ -2,7 +2,6 @@ package edu.hawaii.sdlogic;
 
 import java.util.Properties;
 
-import edu.hawaii.sdlogic.fertility.FlatFertility;
 import edu.hawaii.sdlogic.utils.Loop;
 import edu.hawaii.sdlogic.utils.PropertyManager;
 
@@ -11,7 +10,6 @@ public class Main {
 	 * dummy function for loading important clesses on memory
 	 */
 	public static void dummy() {
-		FlatFertility.get();
 	}
 
 
@@ -534,5 +532,14 @@ public class Main {
 		manager.interprete(props);
 
 		Loop.mainLoop();
+
+		/*
+		for(int ii = 5; ii < 35; ii += 1) {
+			if(ii % 5 != 0) {
+				Env.sigmaOutput= ((double)ii) / 100;
+				Loop.mainLoop();
+			}
+		}
+		*/
 	}
 }

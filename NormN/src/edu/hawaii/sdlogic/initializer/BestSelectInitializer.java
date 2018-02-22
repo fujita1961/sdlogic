@@ -27,6 +27,10 @@ public class BestSelectInitializer extends Initializer {
 		this.sigma = sigma;
 	}
 
+	public BestSelectInitializer() {
+		this(50, 100, 50, 30);
+	}
+
 	@Override
 	public void init() {
 		initTypes();

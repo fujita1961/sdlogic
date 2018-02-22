@@ -44,6 +44,7 @@ public class PropertyManager {
 			"mapHeight",
 			"actors",
 			"roles",
+			"valueRoles",
 			"lifeSpan",
 			"searchIteration",
 			"collaborativeRange",
@@ -79,6 +80,7 @@ public class PropertyManager {
 	private String[] booleanStrings = {
 			"enableExchanging",
 			"enableCollaborating",
+			"enableStoring",
 			"changePopulation",
 			"survive",
 			"friendFlag",
@@ -101,6 +103,7 @@ public class PropertyManager {
 			"drawRelationDensity"
 	};
 
+	@Deprecated
 	public boolean interpreteInt(String key, String val) {
 		for(String str: intStrings) {
 			if(str.equals(key)) {
@@ -122,6 +125,7 @@ public class PropertyManager {
 		return false;
 	}
 
+	@Deprecated
 	public boolean interpreteDouble(String key, String val) {
 		for(String str: doubleStrings) {
 			if(str.equals(key)) {
@@ -143,6 +147,7 @@ public class PropertyManager {
 		return false;
 	}
 
+	@Deprecated
 	public boolean interpreteString(String key, String val) {
 		for(String str: stringStrings) {
 			if(str.equals(key)) {
@@ -162,6 +167,7 @@ public class PropertyManager {
 		return false;
 	}
 
+	@Deprecated
 	public boolean interpreteBoolean(String key, String val) {
 		for(String str: booleanStrings) {
 			if(str.equals(key)) {
@@ -187,14 +193,65 @@ public class PropertyManager {
 		for(Object obj: props.keySet()) {
 			String str = (String)obj;
 			String val = props.getProperty(str);
-			System.out.println(str + "," + val);
-			if(interpreteInt(str, val) || interpreteDouble(str, val) || interpreteString(str, val)
-					|| interpreteBoolean(str, val)) {
-			} else {
+
+			// System.out.println(str + "," + val);
+
+			Class<Env> cls = Env.class;
+			try {
+				Field field = cls.getField(str);
+				Class<?> type = field.getType();
+
+				if(type == int.class) {
+					int value = Integer.parseInt(val.trim());
+					field.set(null, value);
+				} else if(type == double.class) {
+					double value = Double.parseDouble(val.trim());
+					field.set(null, value);
+				} else if(type == boolean.class) {
+					String valTrim = val.trim();
+					if("true".equals(valTrim)) {
+						field.setBoolean(null, true);
+					} else if("false".equals(valTrim)) {
+						field.setBoolean(null, false);
+					} else {
+						System.err.printf("key = %s is not a member of properties or value = %s is ilegal.\n", str, val);
+						return false;
+					}
+					/*
+					boolean value = Boolean.parseBoolean(val.trim());
+					field.set(null, value);
+					*/
+				} else if(type == String.class) {
+					field.set(null, val);
+				}
+
+				/*
+				if(interpreteInt(str, val) || interpreteDouble(str, val) || interpreteString(str, val)
+						|| interpreteBoolean(str, val)) {
+				} else {
+					System.err.printf("key = %s is not a member of properties or value = %s is ilegal.\n", str, val);
+					return false;
+				}
+				*/
+			} catch (NoSuchFieldException e) {
 				System.err.printf("key = %s is not a member of properties or value = %s is ilegal.\n", str, val);
+				e.printStackTrace();
+				return false;
+			} catch (IllegalAccessException iae) {
+				iae.printStackTrace();
 				return false;
 			}
 		}
+
+		if(Env.printParameterFlag) {
+			for(Object obj: props.keySet()) {
+				String str = (String)obj;
+				String val = props.getProperty(str);
+
+				System.out.println(str + " = " + val);
+			}
+		}
+
 		return true;
 	}
 }

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
+import edu.hawaii.sdlogic.Term;
 import edu.hawaii.utils.Canvas;
 
 /**
@@ -21,6 +22,7 @@ public class DrawPlane implements Draw {
 	 */
 	@Override
 	public void init() {
+		initColor();
 		// displayWidth = mapWidth * cellWidth + displayMargin * 2;
 		displayWidth = mapWidth * cellWidth * 2 + displayMargin * 3;
 		displayHeight = mapHeight * cellHeight + displayMargin * 2;
@@ -35,15 +37,44 @@ public class DrawPlane implements Draw {
 	/**
 	 * color table
 	 */
-	protected int[][] colors = {
+	protected int[][] colors0 = {
 			{ 0, 0, 255 },
 			{ 255, 0, 0 },
-			{ 0, 255, 0 },
 			{ 0, 255, 255 },
 			{ 255, 255, 0 },
 			{ 255, 0, 255 },
 			{ 255, 255, 255 }
 	};
+
+	private int[] exchangeColor = { 0, 255, 0 };
+
+	protected int[][] colors;
+
+	protected void initColor() {
+		colors = new int[colors0.length + 1][];
+		int exchangeIndex = 0;
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			if(Env.roleNames[i] == Term.EXCHANGING) {
+				exchangeIndex = i;
+				break;
+			}
+		}
+
+		if(exchangeIndex >= colors0.length) {
+			exchangeIndex = colors0.length - 1;
+		}
+
+		for(int i = 0; i < colors0.length; i++) {
+			if(i < exchangeIndex) {
+				colors[i] = colors0[i];
+			} else if(i == exchangeIndex) {
+				colors[i] = exchangeColor;
+				colors[i + 1] = colors0[i];
+			} else {
+				colors[i + 1] = colors0[i];
+			}
+		}
+	}
 
 	/**
 	 * select proper color for actor
@@ -145,7 +176,7 @@ public class DrawPlane implements Draw {
 				int fx = friend.getX();
 				int fy = friend.getY();
 
-				if(friend.getReverseFriends().size() > 100) {
+				if(friend.getReverseFriends().size() > 50) {
 					// && actor.getReverseFriends().contains(friend)) {
 					// && Math.abs(fx - x) <= collaborativeRange && Math.abs(fy - y) <= collaborativeRange)
 
@@ -211,7 +242,7 @@ public class DrawPlane implements Draw {
 		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
 		for(Actor actor: Env.actorList) {
 			LinkedList<Actor>[] exchangers = actor.getExchangers();
-			for(int i = 0; i < Env.roles; i++) {
+			for(int i = 0; i < roles; i++) {
 				for(Actor exchanger: exchangers[i]) {
 					HashSet<Actor> set = map.get(exchanger);
 					if(set == null) {
@@ -253,7 +284,7 @@ public class DrawPlane implements Draw {
 					}
 				}
 
-				for(int j = 0; j < Env.roles; j++) {
+				for(int j = 0; j < roles; j++) {
 					for(Actor friend: actor.getExchangers()[j]) {
 						if(!done.contains(friend)) {
 							done.add(friend);
@@ -293,9 +324,11 @@ public class DrawPlane implements Draw {
 	 */
 	public void drawRelationDensity(int left, int top) {
 		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
+		int roles = Env.roles + Env.stockRoles;
+
 		for(Actor actor: Env.actorList) {
 			LinkedList<Actor>[] exchangers = actor.getExchangers();
-			for(int i = 0; i < Env.roles; i++) {
+			for(int i = 0; i < roles; i++) {
 				for(Actor exchanger: exchangers[i]) {
 					HashSet<Actor> set = map.get(exchanger);
 					if(set == null) {
@@ -336,7 +369,7 @@ public class DrawPlane implements Draw {
 						}
 					}
 
-					for(int j = 0; j < Env.roles; j++) {
+					for(int j = 0; j < roles; j++) {
 						for(Actor friend: actor.getExchangers()[j]) {
 							if(!done.contains(friend)) {
 								done.add(friend);
@@ -384,9 +417,10 @@ public class DrawPlane implements Draw {
 		int cellWidthHalf = cellWidth / 2;
 		int cellHeightHalf = cellHeight / 2;
 		int heightBias = cellHeightHalf + displayMargin;
+		int roles = Env.roles + Env.stockRoles;
 
-		for(int i = 0; i < Env.roles; i++) {
-			if(actor.getExchangers()[i].size() > 4) {
+		for(int i = 0; i < roles; i++) {
+			if(actor.getExchangers()[i].size() > 6) {
 				for(Actor friend: actor.getExchangers()[i]) {
 					if(friend != null) {
 						int fx = friend.getX();

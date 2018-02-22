@@ -211,7 +211,7 @@ public class Entropy {
 
 	public void printMaxEntropy() {
 		int actors = Env.actorList.size();
-		int types = Env.roles + 2;
+		int types = Env.roles + Env.stockRoles + 2;
 		double emptyP = 1 - ((double)actors) / (Env.mapWidth * Env.mapHeight);
 
 		System.out.print(actors + " " + maxEntropy(9, types, emptyP) + " ");
