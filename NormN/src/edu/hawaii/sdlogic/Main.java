@@ -531,14 +531,18 @@ public class Main {
 		Properties props = manager.read(propertyFile);
 		manager.interprete(props);
 
+		/*
+		for(int i = 0; i < 30; i++) {
+			Env.rewardTable[i] = 3;
+		}
+		*/
+
 		Loop.mainLoop();
 
 		/*
-		for(int ii = 5; ii < 35; ii += 1) {
-			if(ii % 5 != 0) {
-				Env.sigmaOutput= ((double)ii) / 100;
-				Loop.mainLoop();
-			}
+		for(int ii = 15; ii > 10; ii -= 1) {
+			Env.friends = ii;
+			Loop.mainLoop();
 		}
 		*/
 	}

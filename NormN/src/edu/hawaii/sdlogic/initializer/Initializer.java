@@ -99,7 +99,7 @@ public abstract class Initializer {
 		*/
 
 		if(Env.roleNames == null) {
-			int roles = Env.roles + Env.stockRoles;
+			int roles = Env.roles + Env.storeRoles;
 
 			if(Env.enableExchanging) {
 				roles++;
@@ -114,16 +114,16 @@ public abstract class Initializer {
 				Env.roleNames[i] = ("Role-" + i).intern();
 			}
 
-			for(int i = 0; i < Env.stockRoles; i++) {
+			for(int i = 0; i < Env.storeRoles; i++) {
 				Env.roleNames[Env.roles + i] = ("ValueRole-" + i).intern();
 			}
 
 			if(Env.enableExchanging) {
-				Env.roleNames[Env.roles + Env.stockRoles] = Term.EXCHANGING;
+				Env.roleNames[Env.roles + Env.storeRoles] = Term.EXCHANGING;
 			}
 
 			if(Env.enableCollaborating) {
-				Env.roleNames[Env.roles + Env.stockRoles + 1] = Term.COLLABORATING;
+				Env.roleNames[Env.roles + Env.storeRoles + 1] = Term.COLLABORATING;
 			}
 		}
 
@@ -173,7 +173,7 @@ public abstract class Initializer {
 	 * common method for initializing fertility maps and output functions.
 	 */
 	protected static void initFertilityAndOutputFunction() {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		if(Env.fertilityMaps == null) {
 			Env.fertilityMaps = new double[roles][Env.mapWidth][Env.mapHeight];
@@ -220,13 +220,17 @@ public abstract class Initializer {
 				for(int x = 0; x < Env.mapWidth; x++) {
 					for(int y = 0; y < Env.mapHeight; y++) {
 						Env.fertilityMaps[i][x][y] = Env.fertilityClasses[i].calculate(x, y);
+						/*
 						if(i == 0) {
 							System.out.print(Env.fertilityMaps[i][x][y] + " ");
 						}
+						*/
 					}
+					/*
 					if(i == 0) {
 						System.out.println();
 					}
+					*/
 				}
 			}
 		}

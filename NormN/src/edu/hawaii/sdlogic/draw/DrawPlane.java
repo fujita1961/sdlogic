@@ -324,7 +324,7 @@ public class DrawPlane implements Draw {
 	 */
 	public void drawRelationDensity(int left, int top) {
 		HashMap<Actor, HashSet<Actor>> map = new HashMap<Actor, HashSet<Actor>>();
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		for(Actor actor: Env.actorList) {
 			LinkedList<Actor>[] exchangers = actor.getExchangers();
@@ -417,7 +417,7 @@ public class DrawPlane implements Draw {
 		int cellWidthHalf = cellWidth / 2;
 		int cellHeightHalf = cellHeight / 2;
 		int heightBias = cellHeightHalf + displayMargin;
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		for(int i = 0; i < roles; i++) {
 			if(actor.getExchangers()[i].size() > 6) {

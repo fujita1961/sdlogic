@@ -42,6 +42,11 @@ public class Actor {
 	private LinkedList<Actor>[] exchangers;
 
 	/**
+	 * good exchanging locations
+	 */
+	private int[][] exchangingLocations;
+
+	/**
 	 * exchange rate
 	 */
 	private double exchangeRate = Env.exchangeRate;
@@ -83,11 +88,23 @@ public class Actor {
 	public static void reclaim(Actor actor) {
 		actor.clearFriends();
 		if(Env.exchangeClassName.equals("MemoryExchange")) {
-			for(int i = 0; i < Env.roles + Env.stockRoles; i++) {
+			for(int i = 0; i < Env.roles + Env.storeRoles; i++) {
 				actor.exchangers[i].clear();
 			}
 		}
+		if(Env.exchangeClassName.equals("LocalizedExchange")) {
+			for(int i = 0; i < Env.roles + Env.storeRoles; i++) {
+				actor.exchangingLocations[i][0] = -1;
+				actor.exchangingLocations[i][1] = -1;
+			}
+		}
 		pool.offer(actor);
+
+		actor.age = 0;
+		actor.lifeSpan = 0;
+		actor.performance = 0;
+		actor.x = -1;
+		actor.y = -1;
 	}
 
 	/**
@@ -112,9 +129,16 @@ public class Actor {
 		reverseFriends = new HashSet<Actor>();
 
 		if(Env.exchangeClassName.equals("MemoryExchange")) {
-			exchangers = new LinkedList[Env.roles + Env.stockRoles];
-			for(int i = 0; i < Env.roles + Env.stockRoles; i++) {
+			exchangers = new LinkedList[Env.roles + Env.storeRoles];
+			for(int i = 0; i < Env.roles + Env.storeRoles; i++) {
 				exchangers[i] = new LinkedList<Actor>();
+			}
+		}
+		if(Env.exchangeClassName.equals("LocalizedExchange")) {
+			exchangingLocations = new int[Env.roles + Env.storeRoles][2];
+			for(int i = 0; i < Env.roles + Env.storeRoles; i++) {
+				exchangingLocations[i][0] = -1;
+				exchangingLocations[i][1] = -1;
 			}
 		}
 
@@ -171,7 +195,7 @@ public class Actor {
 				ort.setEffort(effort);
 			}
 
-			for(int i = Env.roles; i < Env.roles + Env.stockRoles; i++) {
+			for(int i = Env.roles; i < Env.roles + Env.storeRoles; i++) {
 				OperantResource ort = getOperantResource(Env.roleNames[i]);
 
 				double effort = Env.rand.nextDouble() / Env.storeRate;
@@ -179,7 +203,7 @@ public class Actor {
 				ort.setEffort(effort);
 			}
 
-			for(int i = Env.roles + Env.stockRoles; i < Env.roleNames.length; i++) {
+			for(int i = Env.roles + Env.storeRoles; i < Env.roleNames.length; i++) {
 				OperantResource ort = getOperantResource(Env.roleNames[i]);
 
 				double effort = Env.rand.nextDouble();
@@ -196,7 +220,8 @@ public class Actor {
 			}
 		}
 
-		age = Env.rand.nextInt(Env.lifeSpan);
+		// age = Env.rand.nextInt(Env.lifeSpan);
+		age = Env.rand.nextInt(Env.lifeSpan / 10);
 		lifeSpan = (int)(Env.lifeSpan + Env.rand.nextGaussian() * 10);
 		exchangeRate = Env.exchangeRate;
 	}
@@ -271,8 +296,8 @@ public class Actor {
 	 * imitate the actor
 	 * @param actor
 	 */
-	public void imitate(Actor actor) {
-		imitate(actor, -1, -1);
+	public void imitate(Actor actor, boolean assigned) {
+		imitate(actor, -1, -1, assigned);
 	}
 
 	/**
@@ -282,6 +307,10 @@ public class Actor {
 	 * @param cy -1 or the center of the map
 	 */
 	public void imitate(Actor actor, int cx, int cy) {
+		imitate(actor, cx, cy, false);
+	}
+
+	public void imitate(Actor actor, int cx, int cy, boolean assigned) {
 		// clear friends list and values
 		for(int i = 0; i < Env.friends; i++) {
 			friends[i] = null;
@@ -290,92 +319,117 @@ public class Actor {
 
 		boolean success = false;
 
-		for(int i = 0; i < 10 && !success; i++) {
-			int ix;
-			int iy;
+		if(!assigned) {
+			for(int i = 0; i < 10 && !success; i++) {
+				int ix;
+				int iy;
 
-			int x0 = actor.getX();
-			int y0 = actor.getY();
+				int x0 = actor.getX();
+				int y0 = actor.getY();
 
-			// if cx and cy are specified, the location of imitation actor is made to tend to move th (cx, cy).
-			if(cx == -1) {
-				ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
-			} else {
-				if(cx > x0) {
-					ix = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize;
-				} else if(cx < x0) {
-					ix = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize - 1;
-				} else {
+				// if cx and cy are specified, the location of imitation actor is made to tend to move th (cx, cy).
+				if(cx == -1) {
 					ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
-				}
-			}
-
-			if(cy == -1) {
-				iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
-			} else {
-				if(cy > y0) {
-					iy = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize;
-				} else if(cy < y0) {
-					iy = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize - 1;
 				} else {
-					iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+					if(cx > x0) {
+						ix = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize;
+					} else if(cx < x0) {
+						ix = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize - 1;
+					} else {
+						ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+					}
 				}
-			}
 
-			// new location
-			int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
-			int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
+				if(cy == -1) {
+					iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+				} else {
+					if(cy > y0) {
+						iy = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize;
+					} else if(cy < y0) {
+						iy = Env.rand.nextInt(Env.windowSize * 2 + 2) - Env.windowSize - 1;
+					} else {
+						iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+					}
+				}
 
-			Actor isEmpty = Env.map[xx][yy];
+				// new location
+				int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
+				int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
 
-			if(isEmpty == null) {
-				// empty location is found.
-				Env.map[x][y] = null;
-				Env.map[xx][yy] = this;
-				x = xx;
-				y = yy;
-				success = true;
+				Actor isEmpty = Env.map[xx][yy];
+
+				if(isEmpty == null) {
+					// empty location is found.
+					Env.map[x][y] = null;
+					Env.map[xx][yy] = this;
+					x = xx;
+					y = yy;
+					success = true;
+				}
 			}
 		}
 
 		double total = 0;
 
-		// imitate values of all operant resources
-		for(int i = 0; i < Env.roleNames.length; i++) {
-			String otrName = Env.roleNames[i];
-			OperantResource mine = resources.get(otrName);
-			OperantResource yours = actor.getOperantResource(otrName);
+		while(total == 0) {
+			// imitate values of all operant resources
+			for(int i = 0; i < Env.roleNames.length; i++) {
+				String otrName = Env.roleNames[i];
+				OperantResource mine = resources.get(otrName);
+				OperantResource yours = actor.getOperantResource(otrName);
 
-			double value = 0;
-			if(!Env.enableStoring2 || i < Env.roles || i >= Env.roles + Env.stockRoles) {
-				value = yours.getEffort() + 0.1 * Env.rand.nextGaussian();
-			} else {
-				value = yours.getEffort() + 0.1 * Env.rand.nextGaussian() / Env.storeRate;
-			}
-			if(value < 0) value = 0;
-
-			if(Env.variableCapability) {
-				double capability = yours.getSkill() + 0.1 * Env.rand.nextGaussian();
-				if(capability > 1.0) {
-					capability = 1.0;
-				} else if(capability < 0.0) {
-					capability = 0.0;
+				double value = 0;
+				if(!Env.enableStoring2 || i < Env.roles || i >= Env.roles + Env.storeRoles) {
+					value = yours.getEffort() + Env.sigmaEffort * Env.rand.nextGaussian();
+				} else {
+					value = yours.getEffort() + Env.sigmaEffort * Env.rand.nextGaussian() / Env.storeRate;
 				}
-				mine.setSkill(capability);
-			} else {
-				mine.setSkill(1.0);
-			}
+				if(value < 0) value = 0;
 
-			mine.setEffort(value);
-			total += value;
-			mine.setOutput(0);
-			mine.setOutput0(0);
+				if(Env.variableCapability) {
+					double capability = yours.getSkill() + Env.sigmaSkill * Env.rand.nextGaussian();
+					if(capability > 1.0) {
+						capability = 1.0;
+					} else if(capability < 0.0) {
+						capability = 0.0;
+					}
+					mine.setSkill(capability);
+				} else {
+					mine.setSkill(1.0);
+				}
+
+				mine.setEffort(value);
+				total += value;
+				mine.setOutput(0);
+				mine.setOutput0(0);
+			}
 		}
 
 		// canonicalize effort values
 		for(String otrName: resources.keySet()) {
 			OperantResource mine = resources.get(otrName);
 			mine.setEffort(mine.getEffort() / total);
+		}
+
+		if(Env.exchangeClassName.equals("LocalizedExchange")) {
+			for(int i = 0; i < Env.roles + Env.storeRoles; i++) {
+				int x = actor.exchangingLocations[i][0];
+				int y = actor.exchangingLocations[i][1];
+
+				if(x >= 0 && y >= 0) {
+					x = x + (int)(Env.windowSize * Env.rand.nextGaussian());
+					y = y + (int)(Env.windowSize * Env.rand.nextGaussian());
+
+					x = (x + Env.mapWidth) % Env.mapWidth;
+					y = (y + Env.mapHeight) % Env.mapHeight;
+
+					exchangingLocations[i][0] = x;
+					exchangingLocations[i][1] = y;
+				} else {
+					exchangingLocations[i][0] = -1;
+					exchangingLocations[i][1] = -1;
+				}
+			}
 		}
 	}
 
@@ -412,13 +466,13 @@ public class Actor {
 			Actor actor = nextTo(Env.windowSize);
 
 			if(actor != null && actor.getPerformance() > performance) {
-				imitate(actor);
+				imitate(actor, false);
 				success = true;
 			}
 		}
 
 		if(!success) {
-			imitate(this);
+			imitate(this, false);
 		}
 	}
 
@@ -477,9 +531,15 @@ public class Actor {
 
 	public void setFriend(int i, Actor friend) {
 		if(friends[i] != null) {
-			friends[i].reverseFriends.remove(this);
+			if(friends[i] == friend) {
+				return;
+			} else {
+				friends[i].reverseFriends.remove(this);
+			}
 		}
+
 		this.friends[i] = friend;
+		this.friendValues[i] = 0;
 		if(friend != null) {
 			friend.reverseFriends.add(this);
 		}
@@ -548,6 +608,10 @@ public class Actor {
 
 	public LinkedList<Actor>[] getExchangers() {
 		return exchangers;
+	}
+
+	public int[][] getExchangingLocations() {
+		return exchangingLocations;
 	}
 
 	public double getExchangeRate() {

@@ -1,7 +1,12 @@
 package edu.hawaii.sdlogic.utils;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
@@ -35,7 +40,7 @@ public class Print {
 	 * analyze exchange links
 	 */
 	public static void printExchangeLinks() {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		int[][] total = new int[Env.roleNames.length][roles];
 		int[] count = new int[Env.roleNames.length];
@@ -91,8 +96,75 @@ public class Print {
 		}
 	}
 
+	public static void printCenterOfGravity() {
+		long sumX = 0;
+		long sumY = 0;
+		long sumX2 = 0;
+		long sumY2 = 0;
+
+		for(Actor actor: Env.actorList) {
+			int x = actor.getX();
+			int y = actor.getY();
+
+			sumX += x;
+			sumY += y;
+			sumX2 += x * x;
+			sumY2 += y * y;
+		}
+
+		double averageX = (double)sumX / (double)Env.actorList.size();
+		double averageY = (double)sumY / (double)Env.actorList.size();
+		// double sigmaX = Math.sqrt((double)sumX2 / (double)Env.actorList.size() - averageX * averageX);
+		// double sigmaY = Math.sqrt((double)sumY2 / (double)Env.actorList.size() - averageY * averageY);
+
+		double sumD = 0;
+		double sumD2 = 0;
+		double[] sumDistance = new double[Env.roleNames.length + 1];
+		double[] sumDistance2 = new double[Env.roleNames.length + 1];
+		int[] size = new int[Env.roleNames.length + 1];
+
+		for(Actor actor: Env.actorList) {
+			int x = actor.getX();
+			int y = actor.getY();
+
+			double d2 = (x - averageX) * (x - averageX) + (y - averageY) * (y - averageY);
+			double d = Math.sqrt(d2);
+
+			sumD += d;
+			sumD2 += d2;
+
+			boolean found = false;
+			for(int i = 0; i < Env.roleNames.length; i++) {
+				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
+				if(ort.getEffort() > 0.5) {
+					sumDistance[i] += d;
+					sumDistance2[i] += d2;
+					size[i]++;
+					found = true;
+					break;
+				}
+			}
+			if(!found) {
+				sumDistance[Env.roleNames.length] += d;
+				sumDistance2[Env.roleNames.length] += d2;
+				size[Env.roleNames.length]++;
+			}
+		}
+
+		double averageD = sumD / Env.actorList.size();
+		double sigmaD = Math.sqrt(sumD2 / Env.actorList.size() - averageD * averageD);
+		System.out.printf("%d %7.3f %7.3f %7.3f %7.3f ", Env.actorList.size(), averageX, averageY, averageD, sigmaD);
+
+		for(int i = 0; i < Env.roleNames.length + 1; i++) {
+			double averageDistance = (double)sumDistance[i] / size[i];
+			double sigmaDistance = Math.sqrt((double)sumDistance2[i] / size[i] - averageDistance * averageDistance);
+
+			System.out.printf("%d %7.3f %7.3f ", size[i], averageDistance, sigmaDistance);
+		}
+	}
+
 	public static void printStatistics() {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		double totalOutput = 0;
 		double totalOutput1 = 0;
@@ -100,18 +172,20 @@ public class Print {
 		int totalActors = 0;
 
 		int[] population = new int[Env.roleNames.length + 1];
-		double[][] outcome = new double[Env.roleNames.length + 1][roles];
+		double[][] outcome0 = new double[Env.roleNames.length + 1][roles];
+		double[][] outcome1 = new double[Env.roleNames.length + 1][roles];
 
 		for(Actor actor: Env.actorList) {
 			boolean found = false;
 			for(int i = 0; i < Env.roleNames.length; i++) {
 				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
-				if(ort.getEffort() > 0.66) {
+				if(ort.getEffort() > 0.5) {
 					population[i]++;
 					found = true;
 					for(int j = 0; j < roles; j++) {
 						OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
-						outcome[i][j] += ort2.getOutput0();
+						outcome0[i][j] += ort2.getOutput0();
+						outcome1[i][j] += ort2.getOutput();
 					}
 					break;
 				}
@@ -120,7 +194,8 @@ public class Print {
 				population[Env.roleNames.length]++;
 				for(int j = 0; j < roles; j++) {
 					OperantResource ort2 = actor.getOperantResource(Env.roleNames[j]);
-					outcome[Env.roleNames.length][j] += ort2.getOutput0();
+					outcome0[Env.roleNames.length][j] += ort2.getOutput0();
+					outcome1[Env.roleNames.length][j] += ort2.getOutput();
 				}
 			}
 
@@ -135,7 +210,7 @@ public class Print {
 						totalOutput1 += actor.getOperantResource(Env.roleNames[k]).getOutput();
 					}
 
-					totalValue += actor.getOperantResource(Env.roleNames[Env.roles + Env.stockRoles]).getOutput();
+					totalValue += actor.getOperantResource(Env.roleNames[Env.roles + Env.storeRoles]).getOutput();
 				}
 			}
 		}
@@ -146,9 +221,10 @@ public class Print {
 			System.out.printf("%d ", population[i]);
 			for(int j = 0; j < roles; j++) {
 				if(population[i] != 0) {
-					System.out.printf("%8.6f ", outcome[i][j] / population[i]);
+					System.out.printf("%8.6f ", outcome0[i][j] / population[i]);
+					System.out.printf("%8.6f ", outcome1[i][j] / population[i]);
 				} else {
-					System.out.print("0.0 ");
+					System.out.print("0.0 0.0 ");
 				}
 			}
 		}
@@ -157,7 +233,7 @@ public class Print {
 			double out = 0;
 			for(int i = 0; i < Env.roleNames.length + 1; i++) {
 				pop += population[i];
-				out += outcome[i][j];
+				out += outcome0[i][j];
 			}
 
 			if(pop != 0) {
@@ -194,6 +270,138 @@ public class Print {
 				System.out.printf("(%6.4f %6.4f) ", skill, effort);
 			}
 			System.out.println();
+		}
+	}
+
+	private static void printHiererchy(Map<Actor, Set<Actor>>friendMap, boolean head) {
+		Actor top = null;
+		int max = 0;
+
+		Set<Actor> keys = new HashSet<Actor>();
+		keys.addAll(friendMap.keySet());
+
+		if(head) {
+			System.out.print("(" + (keys.size() + 1) + " ");
+		}
+
+		for(Actor actor: keys) {
+			int size = friendMap.get(actor).size();
+			if(size > max) {
+				max = size;
+				top = actor;
+			}
+		}
+
+		if(max == 0) {
+			if(!head) {
+				for(int i = 0; i < keys.size(); i++) {
+					System.out.print("(1 ) ");
+				}
+			}
+			if(head) {
+				System.out.print(") ");
+			}
+			return;
+		}
+
+		Map<Actor, Set<Actor>> newFriendMap = new HashMap<Actor, Set<Actor>>();
+
+		Set<Actor> friends = friendMap.get(top);
+		for(Actor actor: friends) {
+			HashSet<Actor> set = new HashSet<Actor>();
+			set.addAll(friendMap.get(actor));
+			set.retainAll(friends);
+			set.remove(top);
+			newFriendMap.put(actor, set);
+		}
+
+		printHiererchy(newFriendMap, true);
+
+		for(Actor actor: keys) {
+			if(actor == top || friends.contains(actor)) {
+				friendMap.remove(actor);
+			} else {
+				Set<Actor> set = friendMap.get(actor);
+				set.removeAll(friends);
+				set.remove(top);
+			}
+		}
+
+		if(friendMap.size() > 0) {
+			printHiererchy(friendMap, false);
+		}
+
+		if(head) {
+			System.out.print(") ");
+		}
+	}
+
+	public static void printStructure() {
+		List<Actor> aList = new ArrayList<Actor>();
+
+		aList.addAll(Env.actorList);
+
+		/*
+		for(Actor actor: Env.actorList) {
+			aList.add(actor);
+		}
+		*/
+
+		aList.sort(new Comparator<Actor>() {
+
+			@Override
+			public int compare(Actor arg0, Actor arg1) {
+				return arg1.getReverseFriends().size() - arg0.getReverseFriends().size();
+			}
+		});
+
+		Actor a = aList.get(0);
+
+		Map<Actor, Set<Actor>> friendMap = new HashMap<Actor, Set<Actor>>();
+		Set<Actor> friends = a.getReverseFriends();
+
+		for(Actor friend: friends) {
+			Set<Actor> set = new HashSet<Actor>();
+			set.addAll(friend.getReverseFriends());
+			set.retainAll(friends);
+			friendMap.put(friend, set);
+		}
+
+		printHiererchy(friendMap, true);
+
+		/*
+		friendList.sort(new Comparator<Set<Actor>>() {
+
+			@Override
+			public int compare(Set<Actor> arg0, Set<Actor> arg1) {
+				return arg1.size() - arg0.size();
+			}
+		});
+
+		for(Set<Actor> friend: friendList) {
+			System.out.print(friend.size() + " ");
+		}
+		*/
+
+		/*
+		Set<Actor> total = new HashSet<Actor>();
+		int sum = 0;
+
+		for(Actor actor: aList) {
+			int size = actor.getReverseFriends().size();
+			if(size < 100) {
+				break;
+			}
+			total.addAll(actor.getReverseFriends());
+			sum += size;
+			System.out.print(sum + "-" + total.size() + " ");
+		}
+		*/
+	}
+
+	public static void printReward() {
+		for(int i = 0; i < Env.rewardTable.length; i++) {
+			System.out.printf("%6.4f ", Env.rewardTable[i]);
 		}
 	}
 }

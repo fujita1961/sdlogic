@@ -22,7 +22,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 		OperantResource partnerCollaboOtr = partner.getOperantResource(Term.COLLABORATING);
 
 		// calculate collaborating effect
-		for(int k = 0; k < Env.roles + Env.stockRoles; k++) {
+		for(int k = 0; k < Env.roles + Env.storeRoles; k++) {
 			OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[k]);
 			if(collaboOtr != null) {
 				cooperates[k] = partnerOtr.getEffort() * partnerOtr.getSkill()
@@ -32,7 +32,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 			}
 			// outputs[k] *= (1 + cooperate / Env.friends);
 			// outputs0[k] is not equal to outputs[k]
-			value += outputs[k] * (1 + cooperates[k] / Env.friends);
+			value += outputs[k] * (1 + (1 - Env.shareRate) * cooperates[k] / Env.friends);
 		}
 
 		// collaboration for exchange
@@ -52,7 +52,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 	}
 
 	public void calculateAll(Actor actor) {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		OperantResource[] otrs = new OperantResource[roles];
 		double[] outputs = new double[roles];
@@ -166,6 +166,28 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 						actor.setX(x2);
 						actor.setY(y2);
 					}
+				} else if(Env.macroFlag4) {
+					int x00 = (actor.getX() + x0 + Env.mapWidth) % Env.mapWidth;
+					int y00 = (actor.getY() + y0 + Env.mapWidth) % Env.mapWidth;
+
+					// try to move to the empty space
+					double neighborEntropy = Env.entropy.primitiveContinuousEntropy(x00, y00, 1, false);
+					double selfEntropy = Env.entropy.primitiveContinuousEntropy(actor.getX(), actor.getY(), 1, false);
+					int ineighbor = (int)(neighborEntropy * 10);
+					int iself = (int)(selfEntropy * 10);
+
+					if(ineighbor < 0) ineighbor = 0;
+					else if(ineighbor >= Env.rewardTable.length) ineighbor = Env.rewardTable.length - 1;
+					if(iself < 0) iself = 0;
+					else if(iself >= Env.rewardTable.length) iself = Env.rewardTable.length - 1;
+
+					if(Env.rewardTable[ineighbor] > Env.rewardTable[iself]) {
+					// if(neighborEntropy < selfEntropy) {
+						Env.map[actor.getX()][actor.getY()] = null;
+						Env.map[x00][y00] = actor;
+						actor.setX(x00);
+						actor.setY(y00);
+					}
 				}
 			}
 
@@ -220,7 +242,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 							cooperate = partnerOtr.getEffort() * partnerOtr.getSkill();
 						}
 
-						outputs[k] *= (1 + cooperate / Env.friends);
+						outputs[k] *= (1 + (1 - Env.shareRate) * cooperate / Env.friends);
 
 						// outputs[k] = otrs[k].getOutput() * (1 + cooperate / Env.friends);
 						value += outputs0[k] * (1 + (1 - Env.shareRate) * cooperate / Env.friends);
@@ -243,7 +265,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 					double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange / Env.friends);
 
 					value += actorExchangeOutput;
-				} else {
+				} else if(partner != null) {
 					for(int k = 0; k < roles; k++) {
 						outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
 						if(Env.shareRate > 0 && partner != null) {
@@ -253,7 +275,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 						}
 					}
 				}
-			} else {
+			} else if(partner != null) {
 				for(int k = 0; k < roles; k++) {
 					outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
 					if(Env.shareRate > 0 && partner != null) {
@@ -264,8 +286,10 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 				}
 			}
 
-			actor.setFriend(j, partner);
-			actor.setFriendValue(j, value);
+			if(Env.friendFlag) {
+				actor.setFriend(j, partner);
+				actor.setFriendValue(j, value);
+			}
 		}
 
 		// add fluctuation to the output

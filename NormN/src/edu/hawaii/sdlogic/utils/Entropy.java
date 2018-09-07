@@ -29,7 +29,7 @@ public class Entropy {
 					empty++;
 				} else {
 					double max = 0.0;
-					int maxIndex = -1;
+					int maxIndex = 0;
 
 					for(int k = 0; k < Env.roleNames.length; k++) {
 						OperantResource otr = actor.getOperantResource(Env.roleNames[k]);
@@ -67,6 +67,71 @@ public class Entropy {
 		for(int i = 0; i < Env.roleNames.length; i++) {
 			if(typeWorkers[i] != 0) {
 				double p = (double)typeWorkers[i] / width2;
+				entropy -= p * Math.log(p);
+			}
+		}
+
+		return entropy;
+	}
+
+	public double primitiveContinuousEntropy(int x, int y, int range, boolean self) {
+		int empty = 0;
+		double[] typeWorkers = new double[Env.roleNames.length];
+
+		for(int i = -range; i <= range; i++) {
+			int xx = (x + i + Env.mapWidth) % Env.mapWidth;
+			for(int j = -range; j <= range; j++) {
+				if(!self && i == 0 && j == 0) continue;
+
+				int yy = (y + j + Env.mapHeight) % Env.mapHeight;
+
+				Actor actor = Env.map[xx][yy];
+				if(actor == null) {
+					empty++;
+				} else {
+					// double max = 0.0;
+					// int maxIndex = -1;
+
+					for(int k = 0; k < Env.roleNames.length; k++) {
+						OperantResource otr = actor.getOperantResource(Env.roleNames[k]);
+						double value = otr.getEffort();
+						typeWorkers[k] += value;
+					}
+				}
+			}
+		}
+
+		int width = 2 * range + 1;
+
+		// 2018/01/30 changed.
+		double width2;
+
+		if(self) {
+			width2 = width * width;
+		} else {
+			width2 = width * width - 1;
+		}
+
+		double entropy = 0;
+
+		/*
+		if(empty != 0) {
+			double pempty = (double)empty / width2;
+			entropy -= pempty * Math.log(pempty);
+		}
+		*/
+
+		/*
+		if(empty >= width2 / 2) {
+			entropy += 2.0;
+		}
+		*/
+
+		entropy += empty * 2.0;
+
+		for(int i = 0; i < Env.roleNames.length; i++) {
+			if(typeWorkers[i] != 0) {
+				double p = (double)typeWorkers[i] / (width2 - empty);
 				entropy -= p * Math.log(p);
 			}
 		}
@@ -149,10 +214,11 @@ public class Entropy {
 		}
 
 		double val = sum / Math.log(2);
+		double value = (val / (Env.mapWidth * Env.mapHeight));
 
-		System.out.print((val / (Env.mapWidth * Env.mapHeight)) + " ");
+		System.out.print(value + " ");
 
-		return val;
+		return value;
 	}
 
 	public double friendEntropy() {
@@ -209,12 +275,15 @@ public class Entropy {
 		return maxEntropy2(actors, types, count, p, 0, 1.0);
 	}
 
-	public void printMaxEntropy() {
+	public double printMaxEntropy() {
 		int actors = Env.actorList.size();
-		int types = Env.roles + Env.stockRoles + 2;
+		int types = Env.roles + Env.storeRoles + 2;
 		double emptyP = 1 - ((double)actors) / (Env.mapWidth * Env.mapHeight);
+		double max = maxEntropy(9, types, emptyP);
 
-		System.out.print(actors + " " + maxEntropy(9, types, emptyP) + " ");
+		System.out.print(actors + " " + max + " ");
+
+		return max;
 	}
 
 	public static void main(String[] args) {

@@ -41,7 +41,7 @@ public class DenseInitializer extends Initializer {
 		double effort = 0.9;
 		List<Actor> actors = new ArrayList<Actor>();
 		Set<Actor> friends = new HashSet<Actor>();
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		for(int type = 0; type < roles; type++) {
 			actors.clear();

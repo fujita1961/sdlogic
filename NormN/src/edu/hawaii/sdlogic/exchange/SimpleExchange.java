@@ -19,6 +19,7 @@ import edu.hawaii.sdlogic.output.CooperativeCalculateOutput;
  */
 public class SimpleExchange implements Exchange {
 	protected boolean memorized = false;
+	protected boolean localized = false;
 
 	public SimpleExchange() {
 		memorized = false;
@@ -44,7 +45,7 @@ public class SimpleExchange implements Exchange {
 	 * @param extras
 	 */
 	protected void categorizeActors(Set<Actor> satisfiedActors, Set<Actor> poorActors, List<Actor>[] extras) {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		double[] outputs = new double[roles];
 		double liveCondition = Env.liveCondition * roles;
@@ -76,7 +77,7 @@ public class SimpleExchange implements Exchange {
 						}
 					}
 
-					for(int k = 0; k < Env.stockRoles; k++) {
+					for(int k = 0; k < Env.storeRoles; k++) {
 						double value = actor.getOperantResource(Env.roleNames[Env.roles + k]).getOutput();
 						// 0.1 is tentative
 						if(value > 0.1) {
@@ -141,10 +142,10 @@ public class SimpleExchange implements Exchange {
 		// exchange capability with collaboration
 		double exchangeCapability = calculateExchangeCapability(actor);
 
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		if(memorized) {
-			for(int i = 0; i < Env.stockRoles; i++) {
+			for(int i = 0; i < Env.storeRoles; i++) {
 				exchangerIndex[Env.roles + i] = 0;
 				// tentative;
 				// actor.getExchangers()[i].clear();
@@ -171,7 +172,7 @@ public class SimpleExchange implements Exchange {
 			}
 		}
 
-		for(int j = 0; j < Env.stockRoles; j++) {
+		for(int j = 0; j < Env.storeRoles; j++) {
 			int jj = Env.roles + j;
 			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[jj]);
 			double ownOutcome = ownOtr.getOutput();
@@ -403,7 +404,7 @@ public class SimpleExchange implements Exchange {
 			ownOtr.setOutput(extraVolume[j] + Env.liveCondition);
 		}
 
-		for(int j = 0; j < Env.stockRoles; j++) {
+		for(int j = 0; j < Env.storeRoles; j++) {
 			if(extraVolume[Env.roles + j] < -Env.EPSILON)
 				System.out.println("Stock Volume is negative!");
 			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[Env.roles + j]);
@@ -416,7 +417,7 @@ public class SimpleExchange implements Exchange {
 	 */
 	@Override
 	public void exchange(Set<Actor> satisfiedActors) {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		// actors who have extra amount of resources
 		@SuppressWarnings("unchecked")
@@ -499,7 +500,7 @@ public class SimpleExchange implements Exchange {
 				}
 
 				// for value added role
-				if(Env.stockRoles > 0) {
+				if(Env.storeRoles > 0) {
 					// the maximum distance for searching
 					double searchLimit = Env.searchLimit;
 
@@ -532,6 +533,15 @@ public class SimpleExchange implements Exchange {
 
 				int currentIteration = 0;
 
+				// type index for the minimum output
+				int minIndex = -1;
+				int lastMinIndex = -1;
+
+				int lastX = -1;
+				int lastY = -1;
+				int currentX = -1;
+				int currentY = -1;
+
 				for(currentIteration = 0; currentIteration < Env.searchIteration; currentIteration++) {
 					// pick up a candidate of exchanging parner.
 					Actor partner = null;
@@ -547,7 +557,7 @@ public class SimpleExchange implements Exchange {
 
 					// If Env.stockRoles > 0 and total does not satisfy the living conditions,
 					if(total < Env.liveCondition * Env.roles) {
-						for(int k = 0; k < Env.stockRoles && !satisfiedActors.isEmpty(); k++) {
+						for(int k = 0; k < Env.storeRoles && !satisfiedActors.isEmpty(); k++) {
 
 							int stockIndex = Env.roles + k;
 
@@ -654,21 +664,28 @@ public class SimpleExchange implements Exchange {
 						}
 					}
 
-					// find the type with the minimum output
-					double min = outputs[0];
+					if(localized && total < Env.liveCondition * (1.0 / Env.exchangeRate + (Env.roles - 1))
+							&& minIndex >= 0) {
+						// continue to use the same minIndex
+					} else {
 
-					// type index for the minimum output
-					int minIndex = 0;
+						// find the type with the minimum output
+						double min = outputs[0];
+						minIndex = 0;
 
-					for(int k = 1; k < Env.roles; k++) {
-						if(outputs[k] < min) {
-							min = outputs[k];
-							minIndex = k;
+
+						for(int k = 1; k < Env.roles; k++) {
+							if(outputs[k] < min) {
+								min = outputs[k];
+								minIndex = k;
+							}
 						}
 					}
 
 					// if no partner exists, exit the loop
 					if(extras[minIndex].isEmpty()) break;
+
+					partner = null;
 
 					if(memorized) {
 						exchangers = actor.getExchangers()[minIndex];
@@ -686,6 +703,45 @@ public class SimpleExchange implements Exchange {
 						}
 					}
 
+					if(localized) {
+						int locX = -1;
+						int locY = -1;
+
+						if(minIndex != lastMinIndex) {
+							int[][] locations = actor.getExchangingLocations();
+							locX = locations[minIndex][0];
+							locY = locations[minIndex][1];
+						} else {
+							locX = lastX;
+							locY = lastY;
+						}
+
+						if(locX >= 0 && locY >= 0) {
+
+							// need to change
+							int repeat = 10;
+
+							for(int j = 0; j < repeat; j++) {
+								locX = locX + (int)(Env.windowSize * Env.rand.nextGaussian());
+								locY = locY + (int)(Env.windowSize * Env.rand.nextGaussian());
+
+								locX = (locX + Env.mapWidth) % Env.mapWidth;
+								locY = (locY + Env.mapHeight) % Env.mapHeight;
+
+								partner = Env.map[locX][locY];
+								if(partner != null && partner != actor && extras[minIndex].contains(partner)) {
+									currentX = locX;
+									currentY = locY;
+									break;
+								} else {
+									partner = null;
+								}
+							}
+						} else {
+							// no location memory
+						}
+					}
+
 					if(partner == null) {
 						// pick up a candidate of exchanging parner.
 						int index = Env.rand.nextInt(extras[minIndex].size());
@@ -694,9 +750,48 @@ public class SimpleExchange implements Exchange {
 							exchangers.addFirst(partner);
 							exchangerIndex[minIndex]++;
 						}
+
+						if(localized) {
+							currentX = partner.getX();
+							currentY = partner.getY();
+
+							int locations[][] = actor.getExchangingLocations();
+
+							// if no location is memorized, store the current location
+							// if(locations[minIndex][0] < 0 && locations[minIndex][1] < 0) {
+								locations[minIndex][0] = currentX;
+								locations[minIndex][1] = currentY;
+							// }
+						}
 					}
 
-					double distance = actor.distance(partner);
+					lastMinIndex = minIndex;
+
+					double distance;
+
+					if(localized) {
+						if(lastX >= 0 && lastY >= 0) {
+							// torus distance
+							int x = currentX - lastX;
+							int y = currentY - lastY;
+							if(x < 0) x = -x;
+							if(x > Env.mapWidth - x) {
+								x = Env.mapWidth - x;
+							}
+							if(y < 0) y = -y;
+							if(y > Env.mapHeight - y) {
+								y = Env.mapHeight - y;
+							}
+
+							distance = Math.sqrt(x * x + y * y);
+						} else {
+							distance = actor.distance(partner);
+						}
+						lastX = currentX;
+						lastY = currentY;
+					} else {
+						distance = actor.distance(partner);
+					}
 
 					// distance must be less than the search limit.
 					if(distance < searchLimit * exchangeCapability) {
@@ -858,7 +953,7 @@ public class SimpleExchange implements Exchange {
 					actor.getOperantResource(Env.roleNames[k]).setOutput(outputs[k]);
 				}
 
-				if(satisfiedActors.contains(actor) && Env.stockRoles > 0) {
+				if(satisfiedActors.contains(actor) && Env.storeRoles > 0) {
 
 					exchangeSurplus(actor, satisfiedActors, poorActors, exchangerIndex, extras,
 							currentIteration, exchangeRate, searchLimit);

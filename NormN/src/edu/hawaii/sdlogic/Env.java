@@ -33,17 +33,17 @@ public class Env {
 	/**
 	 * margin around the display
 	 */
-	public static int displayMargin;
+	public static int displayMargin = 0;
 
 	/**
 	 * one cell width
 	 */
-	public static int cellWidth;
+	public static int cellWidth = 5;
 
 	/**
 	 * one cell height
 	 */
-	public static int cellHeight;
+	public static int cellHeight = 5;
 
 
 	// map parameters
@@ -86,7 +86,7 @@ public class Env {
 	/**
 	 * number of stocking resources
 	 */
-	public static int stockRoles = 0;
+	public static int storeRoles = 0;
 
 	/**
 	 * names of operant resources
@@ -118,7 +118,7 @@ public class Env {
 	/**
 	 * enable exchanging operant resource
 	 */
-	public static double storeRate = 4.0;
+	public static double storeRate = 1.0;
 
 	/**
 	 * reduction rate for stock
@@ -191,14 +191,14 @@ public class Env {
 	/**
 	 * control the output level.
 	 */
-	public static double outputRate = 1.0;
+	public static double outputRate = 2.0;
 
 	// exchange parameters
 
 	/**
 	 * exchange rate
 	 */
-	public static double exchangeRate = 0;
+	public static double exchangeRate = 1.1;
 
 	/**
 	 * the limit of the itereation number for finding exchange partners
@@ -208,7 +208,7 @@ public class Env {
 	/**
 	 * the maximum distance for sarching exchange partners.
 	 */
-	public static double searchLimit = 200;
+	public static double searchLimit = 2000;
 
 	// collaboration parameters
 
@@ -220,12 +220,12 @@ public class Env {
 	/**
 	 * The range for finding collaborating partners
 	 */
-	public static int collaborativeRange = 1;
+	public static int collaborativeRange = 2;
 
 	/**
 	 * The number of collaboration partners.
 	 */
-	public static int friends = 2;
+	public static int friends = 6;
 
 	// other parameters
 
@@ -241,6 +241,17 @@ public class Env {
 	public static boolean macroFlag1 = false;
 	public static boolean macroFlag2 = false;
 	public static boolean macroFlag3 = false;
+	public static boolean macroFlag4 = false;
+
+	/**
+	 * fluctuation of output
+	 */
+	public static double sigmaEffort = 0.2;
+
+	/**
+	 * fluctuation of output
+	 */
+	public static double sigmaSkill = 0.2;
 
 	/**
 	 * fluctuation of output
@@ -412,6 +423,21 @@ public class Env {
 	public static boolean printEntropyFlag = false;
 
 	/**
+	 * print structure
+	 */
+	public static boolean printStructureFlag = false;
+
+	/**
+	 * print reward table
+	 */
+	public static boolean printRewardFlag = false;
+
+	/**
+	 * print reward table
+	 */
+	public static boolean printCenterOfGravityFlag = false;
+
+	/**
 	 * title bar on/off
 	 */
 	public static boolean titleBar = true;
@@ -420,6 +446,22 @@ public class Env {
 	 * entropy class
 	 */
 	public static Entropy entropy = new Entropy();
+
+	/**
+	 * reword table for entropy. Entropy for 8 neighbors should be 0 to 3.0,
+	 * then the size of array is 30.
+	 */
+	public static double[] rewardTable = new double[160];
+
+	/**
+	 * recognize relationship between reward and entropy.
+	 */
+	public static boolean recognitionFlag = false;
+
+	/**
+	 * recognize relationship between reward and entropy.
+	 */
+	public static boolean recognitionFlag2 = false;
 
 	public static boolean DEBUG = false;
 

@@ -18,7 +18,7 @@ public class GDLogicEvaluation implements Evaluation {
 	public double evaluate(Actor actor) {
 		double sum = 0;
 
-		for(int i = 0; i < Env.roles + Env.stockRoles; i++) {
+		for(int i = 0; i < Env.roles + Env.storeRoles; i++) {
 			OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
 			double value = otr.getOutput();
 			sum *= value;

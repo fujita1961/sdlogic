@@ -13,13 +13,18 @@ import edu.hawaii.sdlogic.operant.OperantResource;
 import edu.hawaii.utils.Canvas;
 
 public class Loop {
+	private static int longevity = 0;
+	private static int longevityCount = 0;
+
+	private static int[] longevityArrayCount = new int[100];
+
 	/**
 	 * oneTurn execution
 	 *   core loop of this simulator
 	 * @param satisfiedActors
 	 */
 	public static void oneTurn(Set<Actor> satisfiedActors, int turn) {
-		int roles = Env.roles + Env.stockRoles;
+		int roles = Env.roles + Env.storeRoles;
 
 		for(Actor actor: Env.actorList) {
 			actor.setPerformance(0);
@@ -38,7 +43,7 @@ public class Loop {
 		// clear share value
 		if(Env.enableStoring || Env.enableStoring2) {
 			for(Actor actor: Env.actorList) {
-				for(int i = 0; i < Env.stockRoles; i++) {
+				for(int i = 0; i < Env.storeRoles; i++) {
 					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 					OperantResource stockOrt = actor.getOperantResource(Env.roleNames[Env.roles + i]);
 					double stockOutput = stockOrt.getOutput();
@@ -131,6 +136,49 @@ public class Loop {
 
 		if(Env.eval instanceof SDLogicEvaluation) {
 			Env.exchange.exchange(satisfiedActors);
+		}
+
+
+		if(Env.recognitionFlag) {
+			double[] table = new double[Env.rewardTable.length];
+			int[] counterTable = new int[Env.rewardTable.length];
+			for(Actor actor: Env.actorList) {
+				/*
+				int xx = actor.getX() - Env.mapWidth / 2;;
+				int yy = actor.getY() - Env.mapHeight / 2;;
+				if(xx * xx + yy * yy < 121) continue;
+				*/
+
+				double reward = 0;
+
+				for(int i = 0; i < roles; i++) {
+					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
+					reward += ort.getOutput();
+				}
+
+				// reenforcement learning
+				double entropy = Env.entropy.primitiveContinuousEntropy(actor.getX(), actor.getY(), 1, false);
+
+				int ientropy = (int)(entropy * 10);
+				if(ientropy >= Env.rewardTable.length) {
+					ientropy = Env.rewardTable.length - 1;
+				} else if(ientropy < 0) {
+					ientropy = 0;
+				}
+
+				table[ientropy] += reward;
+				counterTable[ientropy]++;
+				/*
+				double old = Env.rewardTable[ientropy];
+				Env.rewardTable[ientropy] = old + (reward - old) * 0.01;
+				*/
+			}
+			for(int i = 0; i < Env.rewardTable.length; i++) {
+				if(counterTable[i] > 0) {
+					double old = Env.rewardTable[i];
+					Env.rewardTable[i] = old + (table[i] / counterTable[i] - old) * 0.1;
+				}
+			}
 		}
 
 
@@ -236,8 +284,33 @@ public class Loop {
 		int prevX = Canvas.getPointedX();
 		int prevY = Canvas.getPointedY();
 
+		int places;
+		int[][] xy;
+		double[] reward = null;
+		longevity = 0;
+		longevityCount = 0;
+
+		if(Env.recognitionFlag) {
+			// places = 3;
+			places = 3;
+			xy = new int[places][2];
+			reward = new double[places];
+		} else {
+			places = 1;
+			xy = new int[places][2];
+		}
+
 		// turn is the number of the loop
 		for(int turn = 0; turn < Env.periods; turn++) {
+			if((turn + 0) % Env.printInterval == 0) {
+				longevity = 0;
+				longevityCount = 0;
+
+				for(int i = 0; i < longevityArrayCount.length; i++) {
+					longevityArrayCount[i] = 0;
+				}
+			}
+
 			// if the actor list becomes empty before the end of the loop, return false
 			if(Env.actorList.isEmpty()) {
 				if(turn < Env.periods) {
@@ -293,10 +366,11 @@ public class Loop {
 				List<Actor> addActors = new ArrayList<Actor>();
 				// int sumAge = 0;
 				// int deathForLife = 0;
+
+				// some actors die
 				for(Actor actor: Env.actorList) {
 					if(satisfiedActors.contains(actor)) {
 						int age = actor.incrementAge();
-						int birth = 5;
 
 						if(age > actor.getLifeSpan() && Env.actorList.size() > Env.actors * 5) {
 							// if an actor reaches the life span, the actor die.
@@ -306,89 +380,192 @@ public class Loop {
 							removeActors.add(actor);
 							// sumAge += age;
 							// deathForLife++;
-						} else if(age % birth == 0) {
-							// if an actor does not reach the life span, it generates a child every 5 years.
+						}
+					} else {
+						// actor.regenerate();
 
+						if(actor.getAge() > -1) {
+							Env.map[actor.getX()][actor.getY()] = null;
+							removeActors.add(actor);
+						} else {
+							actor.incrementAge();
+						}
+					}
+				}
+
+				// if(deathForLife > 0) System.out.println(sumAge / deathForLife);
+
+				int[] table = null;
+				int[] counterTable = null;
+
+				if(Env.recognitionFlag2) {
+					table = new int[Env.rewardTable.length];
+					counterTable = new int[Env.rewardTable.length];
+				}
+
+				// remove actors
+				for(Actor actor: removeActors) {
+					int age = actor.getAge();
+
+					longevity += age;
+					longevityCount++;
+
+					if(age >= 100) age = 99;
+
+					longevityArrayCount[age]++;
+
+					if(Env.recognitionFlag2) {
+						// reenforcement learning
+						double entropy = Env.entropy.primitiveContinuousEntropy(actor.getX(), actor.getY(), 1, false);
+
+						int ientropy = (int)(entropy * 10);
+						if(ientropy >= Env.rewardTable.length) {
+							ientropy = Env.rewardTable.length - 1;
+						} else if(ientropy < 0) {
+							ientropy = 0;
+						}
+
+						table[ientropy] += actor.getAge();
+						counterTable[ientropy]++;
+
+					}
+
+					Env.actorList.remove(actor);
+					Actor.reclaim(actor);
+				}
+
+				if(Env.recognitionFlag2) {
+					for(int i = 0; i < Env.rewardTable.length; i++) {
+						if(counterTable[i] > 0) {
+							double old = Env.rewardTable[i];
+							Env.rewardTable[i] = old + ((double)table[i] / (double)counterTable[i] - old) * 0.1;
+						}
+					}
+				}
+
+				if(Env.actorList.size() != satisfiedActors.size()) {
+
+					// System.err.println("Strange at 385:" + Env.actorList.size() + ", " + satisfiedActors.size());
+				}
+
+				// new actors are born
+				for(Actor actor: Env.actorList) {
+					int age = actor.getAge();
+					int birth = 5;
+
+					if(age % birth == 0) {
+						// if an actor does not reach the life span, it generates a child every 5 years.
+
+						boolean success = false;
+						int count = 0;
+						for(int j = 0; j < 10 && !success; j++) {
+							int ix;
+							int iy;
+
+							int x0 = actor.getX();
+							int y0 = actor.getY();
+
+							// ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+							// iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+
+							ix = (int)(Env.rand.nextGaussian() * Env.windowSize);
+							iy = (int)(Env.rand.nextGaussian() * Env.windowSize);
+
+							// new location
+							int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
+							int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
+
+							boolean cont = false;
+
+							for(int i = 0; i < count; i++) {
+								if(xy[i][0] == xx && xy[i][1] == yy) {
+									cont = true;
+								}
+							}
+
+							if(cont) {
+								continue;
+							}
+
+							Actor isEmpty = Env.map[xx][yy];
+
+							if(isEmpty == null) {
+								// empty location is found.
+								xy[count][0] = xx;
+								xy[count][1] = yy;
+								success = true;
+								if(count++ >= places) {
+									break;
+								}
+							}
+						}
+
+						// if empty space is found, a new child imitate his parent.
+						if(success) {
 							Actor newActor = Actor.getInstance();
 							newActor.init();
 
 							// the first age is given by a random value less than 5 years.
 							newActor.setAge(Env.rand.nextInt(birth));
 
-							boolean success = false;
+							if(count == 1) {
+								Env.map[xy[0][0]][xy[0][1]] = newActor;
+								addActors.add(newActor);
+								newActor.setXY(xy[0][0], xy[0][1]);
+							} else {
+								// when Env.recognitionFlag is true
+								double total = 0;
+								double emin = Double.MAX_VALUE;
 
-							for(int j = 0; j < 10 && !success; j++) {
-								int ix;
-								int iy;
+								for(int i = 0; i < count; i++) {
+									double entropy = Env.entropy.primitiveContinuousEntropy(xy[i][0], xy[i][1], 1, false);
+									// double entropy = Env.entropy.primitiveEntropy(xy[i][0], xy[i][1], 1, false);
+									int ientropy = (int)(entropy * 10);
+									if(ientropy >= Env.rewardTable.length) ientropy = Env.rewardTable.length - 1;
+									else if(ientropy < 0) ientropy = 0;
+									reward[i] = Env.rewardTable[ientropy];
 
-								int x0 = actor.getX();
-								int y0 = actor.getY();
+									if(reward[i] < emin) emin = reward[i];
+									total += reward[i];
+								}
 
-								// ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
-								// iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+								double diff = total - min * count;
 
-								ix = (int)(Env.rand.nextGaussian() * Env.windowSize);
-								iy = (int)(Env.rand.nextGaussian() * Env.windowSize);
+								double rand = Env.rand.nextDouble() * diff;
 
-								// new location
-								int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
-								int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
+								for(int i = 0; i < count; i++) {
+									diff -= reward[i] - min;
+									if(diff <= rand) {
+										Env.map[xy[i][0]][xy[i][1]] = newActor;
+										addActors.add(newActor);
+										newActor.setXY(xy[i][0], xy[i][1]);
 
-								Actor isEmpty = Env.map[xx][yy];
-
-								if(isEmpty == null) {
-									// empty location is found.
-									Env.map[xx][yy] = newActor;
-									addActors.add(newActor);
-									newActor.setXY(xx, yy);
-									success = true;
-									break;
+										break;
+									}
 								}
 							}
 
-							// if empty space is found, a new child imitate his parent.
-							if(success) {
-								if(Env.DEBUG) {
-									for(int i = 0; i < Env.roleNames.length; i++) {
-										OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
-										double outcome = ort.getOutput();
-										if(outcome < 0) {
-											System.err.println("Strange at 356");
-										}
+							if(Env.DEBUG) {
+								for(int i = 0; i < Env.roleNames.length; i++) {
+									OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
+									double outcome = ort.getOutput();
+									if(outcome < 0) {
+										System.err.println("Strange at 356");
 									}
 								}
-								newActor.imitate(actor);
-								if(Env.DEBUG) {
-									for(int i = 0; i < Env.roleNames.length; i++) {
-										OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
-										double outcome = ort.getOutput();
-										if(outcome < 0) {
-											System.err.println("Strange at 356");
-										}
+							}
+							newActor.imitate(actor, true);
+							if(Env.DEBUG) {
+								for(int i = 0; i < Env.roleNames.length; i++) {
+									OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
+									double outcome = ort.getOutput();
+									if(outcome < 0) {
+										System.err.println("Strange at 356");
 									}
 								}
-							} else {
-								Actor.reclaim(newActor);
 							}
 						}
-					} else {
-						// actor.regenerate();
-						Env.map[actor.getX()][actor.getY()] = null;
-						removeActors.add(actor);
 					}
-				}
-
-				// if(deathForLife > 0) System.out.println(sumAge / deathForLife);
-
-				// remove actors
-				for(Actor actor: removeActors) {
-					Env.actorList.remove(actor);
-					Actor.reclaim(actor);
-				}
-
-				if(Env.actorList.size() != satisfiedActors.size()) {
-
-					System.err.println("Strange at 385:" + Env.actorList.size() + ", " + satisfiedActors.size());
 				}
 
 				// add new actors.
@@ -457,7 +634,7 @@ public class Loop {
 			}
 
 
-			if(Env.changePopulation && Env.stopAtMax && (Env.actorList.size() >= Env.mapWidth * Env.mapHeight / 4)) {
+			if(Env.changePopulation && Env.stopAtMax && (Env.actorList.size() >= Env.mapWidth * Env.mapHeight / 2)) {
 				print(turn);
 				Env.draw.draw();
 				return true;
@@ -507,12 +684,27 @@ public class Loop {
 
 	private static void print(int turn) {
 		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
-				|| Env.printStatistics || Env.printExchangeLinksFlag) {
+				|| Env.printStatistics || Env.printExchangeLinksFlag || Env.printStructureFlag
+				|| Env.printRewardFlag || Env.printCenterOfGravityFlag) {
 			System.out.print((turn + 1) + " ");
 		}
 
 		if(Env.printStatistics) {
+			double averageLongevity = 0;
+			if(longevityCount > 0) {
+				averageLongevity = (double)longevity / (double) longevityCount;
+			}
+			System.out.printf("%6.2f ", averageLongevity);
+
+			for(int i = 0; i < longevityArrayCount.length; i++) {
+				System.out.printf("%d ", longevityArrayCount[i]);
+			}
+
 			Print.printStatistics();
+		}
+
+		if(Env.printCenterOfGravityFlag) {
+			Print.printCenterOfGravity();
 		}
 
 		if(Env.printSkillLevelsFlag) {
@@ -524,17 +716,27 @@ public class Loop {
 		}
 
 		if(Env.printEntropyFlag) {
-			Env.entropy.printMaxEntropy();
+			double max = Env.entropy.printMaxEntropy();
 			Env.entropy.friendEntropy();
-			Env.entropy.entropy();
+			double entropy = Env.entropy.entropy();
+			System.out.print(max - entropy + " ");
 		}
 
 		if(Env.printCollaborationCountFlag) {
 			Print.printCollaborationCount();
 		}
 
+		if(Env.printRewardFlag) {
+			Print.printReward();
+		}
+
+		if(Env.printStructureFlag) {
+			Print.printStructure();
+		}
+
 		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
-				|| Env.printStatistics || Env.printExchangeLinksFlag) {
+				|| Env.printStatistics || Env.printExchangeLinksFlag || Env.printStructureFlag
+				|| Env.printRewardFlag || Env.printCenterOfGravityFlag) {
 			System.out.println();
 		}
 	}
@@ -550,6 +752,10 @@ public class Loop {
 			Initializer.metaInit();
 			Env.initializer.init();
 			Env.draw.draw();
+
+			for(int j = 0; j < Env.rewardTable.length; j++) {
+				Env.rewardTable[j] = 0;
+			}
 
 			while(!Loop.loop()) {
 				Env.initializer.init();
