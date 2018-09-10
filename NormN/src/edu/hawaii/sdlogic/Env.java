@@ -227,6 +227,8 @@ public class Env {
 	 */
 	public static int friends = 6;
 
+	public static double collaborationFactor = 1.5;
+
 	// other parameters
 
 	/**

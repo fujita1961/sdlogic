@@ -32,7 +32,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 			}
 			// outputs[k] *= (1 + cooperate / Env.friends);
 			// outputs0[k] is not equal to outputs[k]
-			value += outputs[k] * (1 + (1 - Env.shareRate) * cooperates[k] / Env.friends);
+			value += outputs[k] * (1 + (1 - Env.shareRate) * cooperates[k] * Env.collaborationFactor / Env.friends);
 		}
 
 		// collaboration for exchange
@@ -44,7 +44,7 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 		} else {
 			cooperativeExchange =  partnerExchangeOtr.getEffort() * partnerExchangeOtr.getSkill();
 		}
-		double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange / Env.friends);
+		double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange * Env.collaborationFactor / Env.friends);
 
 		value += actorExchangeOutput;
 
@@ -242,13 +242,13 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 							cooperate = partnerOtr.getEffort() * partnerOtr.getSkill();
 						}
 
-						outputs[k] *= (1 + (1 - Env.shareRate) * cooperate / Env.friends);
+						outputs[k] *= (1 + (1 - Env.shareRate) * cooperate * Env.collaborationFactor / Env.friends);
 
 						// outputs[k] = otrs[k].getOutput() * (1 + cooperate / Env.friends);
-						value += outputs0[k] * (1 + (1 - Env.shareRate) * cooperate / Env.friends);
+						value += outputs0[k] * (1 + (1 - Env.shareRate) * cooperate * Env.collaborationFactor / Env.friends);
 
 						if(Env.shareRate > 0) {
-							double share = outputs0[k] * Env.shareRate * cooperate / Env.friends;
+							double share = outputs0[k] * Env.shareRate * cooperate * Env.collaborationFactor / Env.friends;
 							OperantResource otr = partner.getOperantResource(Env.roleNames[k]);
 							otr.addShare(share);
 						}
@@ -262,14 +262,14 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 					} else {
 						cooperativeExchange =  partnerExchangeOtr.getEffort() * partnerExchangeOtr.getSkill();
 					}
-					double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange / Env.friends);
+					double actorExchangeOutput = cooperativeActorExchange * (1 + cooperativeExchange * Env.collaborationFactor / Env.friends);
 
 					value += actorExchangeOutput;
 				} else if(partner != null) {
 					for(int k = 0; k < roles; k++) {
-						outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
+						outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] * Env.collaborationFactor / Env.friends);
 						if(Env.shareRate > 0 && partner != null) {
-							double share = outputs0[k] * Env.shareRate * cooperates0[k] / Env.friends;
+							double share = outputs0[k] * Env.shareRate * cooperates0[k] * Env.collaborationFactor / Env.friends;
 							OperantResource otr = partner.getOperantResource(Env.roleNames[k]);
 							otr.addShare(share);
 						}
@@ -277,9 +277,9 @@ public class CooperativeCalculateOutput implements CalculateOutput {
 				}
 			} else if(partner != null) {
 				for(int k = 0; k < roles; k++) {
-					outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] / Env.friends);
+					outputs[k] *= (1 + (1 - Env.shareRate) * cooperates0[k] * Env.collaborationFactor / Env.friends);
 					if(Env.shareRate > 0 && partner != null) {
-						double share = outputs0[k] * Env.shareRate * cooperates0[k] / Env.friends;
+						double share = outputs0[k] * Env.shareRate * cooperates0[k] * Env.collaborationFactor / Env.friends;
 						OperantResource otr = partner.getOperantResource(Env.roleNames[k]);
 						otr.addShare(share);
 					}
