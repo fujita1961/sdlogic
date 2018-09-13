@@ -227,7 +227,7 @@ public class Env {
 	 */
 	public static int friends = 6;
 
-	public static double collaborationFactor = 1.5;
+	public static double collaborationFactor = 1.3;
 
 	// other parameters
 
@@ -378,6 +378,10 @@ public class Env {
 	 */
 	public static boolean drawRelationDensity = false;
 
+	/**
+	 * Draw Exchange Location
+	 */
+	public static boolean drawExchangeLocation = false;
 
 	/**
 	 * interval for animationGIF

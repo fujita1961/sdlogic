@@ -23,6 +23,7 @@ public class SimpleExchange implements Exchange {
 
 	public SimpleExchange() {
 		memorized = false;
+		localized = false;
 	}
 
 	private void checkSatisfy(Actor actor) {

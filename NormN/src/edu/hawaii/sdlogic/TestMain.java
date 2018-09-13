@@ -11,8 +11,8 @@ public class TestMain {
 				// "props/SimpleTwoRandom.properties",
 				// "props/FourPoint.properties",
 				// "props/TwoPoint.properties",
-				"props/TwoSamePoint.properties",
-				// "props/TwoSamePointLocalized.properties",
+				// "props/TwoSamePoint.properties",
+				"props/TwoSamePointLocalized.properties",
 		};
 
 		Main.main(options);

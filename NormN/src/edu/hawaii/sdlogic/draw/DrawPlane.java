@@ -443,6 +443,47 @@ public class DrawPlane implements Draw {
 	}
 
 	/**
+	 * draw exchange links
+	 * @param actor
+	 * @param left left margin
+	 * @param top top margin
+	 * @param x x coordinate
+	 * @param y y coordinate
+	 * @param rgb color
+	 */
+	protected void drawExchangeLocation(Actor actor, int left, int top, int x, int y, int[] rgb) {
+		int cellWidthHalf = cellWidth / 2;
+		int cellHeightHalf = cellHeight / 2;
+		int heightBias = cellHeightHalf + displayMargin;
+		int roles = Env.roles + Env.storeRoles;
+
+		for(int i = 0; i < roles; i++) {
+			int[][] locations = actor.getExchangingLocations();
+
+			if(locations != null) {
+				int lx = locations[i][0];
+				int ly = locations[i][1];
+
+				if(lx >=0 && ly >= 0) {
+
+					if(i == 0) {
+						Canvas.setColor(0, 0, 255);
+					} else if(i == 1) {
+						Canvas.setColor(255, 0, 0);
+					} else {
+						Canvas.setColor(0, 255, 0);
+					}
+
+					int x0 = left + lx * cellWidth + cellWidthHalf;
+					int y0 = ly * cellHeight + heightBias;
+
+					Canvas.drawRect(x0, y0, cellWidth, cellHeight);
+				}
+			}
+		}
+	}
+
+	/**
 	 * draw method
 	 */
 	@Override

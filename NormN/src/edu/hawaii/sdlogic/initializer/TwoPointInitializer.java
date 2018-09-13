@@ -5,6 +5,7 @@ import java.util.Random;
 
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
+import edu.hawaii.sdlogic.exchange.LocalizedExchange;
 import edu.hawaii.sdlogic.exchange.MemoryExchange;
 import edu.hawaii.sdlogic.exchange.NoExchange;
 import edu.hawaii.sdlogic.exchange.SimpleExchange;
@@ -122,6 +123,8 @@ public class TwoPointInitializer extends Initializer {
 			Env.exchange = new NoExchange();
 		} else if(Env.exchangeClassName.equals("MemoryExchange")) {
 			Env.exchange = new MemoryExchange();
+		} else if(Env.exchangeClassName.equals("LocalizedExchange")) {
+			Env.exchange = new LocalizedExchange();
 		} else {
 			Env.exchange = new SimpleExchange();
 		}

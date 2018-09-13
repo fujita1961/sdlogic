@@ -6,6 +6,7 @@ import edu.hawaii.sdlogic.draw.Draw;
 import edu.hawaii.sdlogic.draw.DrawPlane;
 import edu.hawaii.sdlogic.eval.Evaluation;
 import edu.hawaii.sdlogic.eval.SDLogicEvaluation;
+import edu.hawaii.sdlogic.exchange.LocalizedExchange;
 import edu.hawaii.sdlogic.exchange.MemoryExchange;
 import edu.hawaii.sdlogic.exchange.NoExchange;
 import edu.hawaii.sdlogic.exchange.SimpleExchange;
@@ -251,6 +252,8 @@ public abstract class Initializer {
 			Env.exchange = new NoExchange();
 		} else if(Env.exchangeClassName.equals("MemoryExchange")) {
 			Env.exchange = new MemoryExchange();
+		} else if(Env.exchangeClassName.equals("LocalizedExchange")) {
+			Env.exchange = new LocalizedExchange();
 		} else {
 			Env.exchange = new SimpleExchange();
 		}
