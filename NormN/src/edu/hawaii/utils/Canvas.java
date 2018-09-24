@@ -99,15 +99,23 @@ public class Canvas {
 	 * @param h height
 	 */
 	public static void show(int w, int h) {
+		show(w, h, true);
+	}
+
+	public static void show(int w, int h, boolean visible) {
 		setWindowSize(w, h);
-		show();
+		show(visible);
 	}
 
 	/**
 	 * Display Canvas
 	 */
 	public static void show() {
-		frame.setVisible(true);
+		show(true);
+	}
+
+	public static void show(boolean visible) {
+		frame.setVisible(visible);
 		int pw = panel.getWidth();
 		int ph = panel.getHeight();
 		int fwidth = frame.getWidth() + width - pw;
@@ -500,9 +508,13 @@ public class Canvas {
 	 * @param h height
 	 */
 	public static void setSize(int w, int h) {
+		setSize(w, h, true);
+	}
+
+	public static void setSize(int w, int h, boolean visible) {
 		setWindowSize(w, h);
 		// frame.setVisible(false);
-		frame.setVisible(true);
+		frame.setVisible(visible);
 		int pw = panel.getWidth();
 		int ph = panel.getHeight();
 		int fwidth = frame.getWidth() + width - pw;

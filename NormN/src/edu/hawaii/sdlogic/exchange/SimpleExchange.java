@@ -55,11 +55,23 @@ public class SimpleExchange implements Exchange {
 			// double total = 0;
 
 			boolean satisfy = true;
+			double sum = 0;
 			for(int k = 0; k < Env.roles; k++) {
 				outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				// total += outputs[k];
 				if(outputs[k] < Env.liveCondition) {
 					satisfy = false;
+				}
+
+				if(Env.exchangeRate > 1.0) {
+					double diff = outputs[k] - Env.liveCondition;
+					if(diff < 0) {
+						sum += diff * Env.exchangeRate;
+					} else {
+						sum += diff;
+					}
+				} else {
+					sum += outputs[k] - Env.liveCondition;
 				}
 			}
 
@@ -72,17 +84,21 @@ public class SimpleExchange implements Exchange {
 					// partial satisfaction
 					poorActors.add(actor);
 
-					for(int k = 0; k < Env.roles; k++) {
-						if(outputs[k] >= Env.liveCondition) {
-							extras[k].add(actor);
-						}
-					}
+					if(sum > 0) {
+						// sum must be more than 0 when the actor is registerd in extras list.
 
-					for(int k = 0; k < Env.storeRoles; k++) {
-						double value = actor.getOperantResource(Env.roleNames[Env.roles + k]).getOutput();
-						// 0.1 is tentative
-						if(value > 0.1) {
+						for(int k = 0; k < Env.roles; k++) {
+							if(outputs[k] >= Env.liveCondition) {
+								extras[k].add(actor);
+							}
+						}
+
+						for(int k = 0; k < Env.storeRoles; k++) {
+							double value = actor.getOperantResource(Env.roleNames[Env.roles + k]).getOutput();
+							// 0.1 is tentative
+							if(value > 0.1) {
 							extras[Env.roles + k].add(actor);
+							}
 						}
 					}
 				}
@@ -664,6 +680,8 @@ public class SimpleExchange implements Exchange {
 							continue;
 						}
 					}
+
+					// System.out.println(currentIteration + ", " + minIndex + ", " + total);
 
 					if(localized && total < Env.liveCondition * (1.0 / Env.exchangeRate + (Env.roles - 1))
 							&& minIndex >= 0) {

@@ -1,5 +1,6 @@
 package edu.hawaii.sdlogic.utils;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,6 +14,8 @@ import edu.hawaii.sdlogic.Env;
 import edu.hawaii.sdlogic.operant.OperantResource;
 
 public class Print {
+	public static PrintStream out = System.out;
+
 	/**
 	 * analyze skill levels for each role
 	 */
@@ -31,7 +34,7 @@ public class Print {
 
 		for(int i = 0; i < Env.roleNames.length; i++) {
 			for(int j = 0; j < Env.roleNames.length; j++) {
-				System.out.printf("%6.4f ", total[i][j] / count[i]);
+				out.printf("%6.4f ", total[i][j] / count[i]);
 			}
 		}
 	}
@@ -55,9 +58,9 @@ public class Print {
 		}
 
 		for(int i = 0; i < Env.roleNames.length; i++) {
-			System.out.printf("%d ", count[i]);
+			out.printf("%d ", count[i]);
 			for(int j = 0; j < roles; j++) {
-				System.out.printf("%d ", total[i][j]);
+				out.printf("%d ", total[i][j]);
 			}
 		}
 	}
@@ -92,7 +95,7 @@ public class Print {
 			} else {
 				num = obj;
 			}
-			System.out.print(num + " ");
+			out.print(num + " ");
 		}
 	}
 
@@ -153,13 +156,13 @@ public class Print {
 
 		double averageD = sumD / Env.actorList.size();
 		double sigmaD = Math.sqrt(sumD2 / Env.actorList.size() - averageD * averageD);
-		System.out.printf("%d %7.3f %7.3f %7.3f %7.3f ", Env.actorList.size(), averageX, averageY, averageD, sigmaD);
+		out.printf("%d %7.3f %7.3f %7.3f %7.3f ", Env.actorList.size(), averageX, averageY, averageD, sigmaD);
 
 		for(int i = 0; i < Env.roleNames.length + 1; i++) {
 			double averageDistance = (double)sumDistance[i] / size[i];
 			double sigmaDistance = Math.sqrt((double)sumDistance2[i] / size[i] - averageDistance * averageDistance);
 
-			System.out.printf("%d %7.3f %7.3f ", size[i], averageDistance, sigmaDistance);
+			out.printf("%d %7.3f %7.3f ", size[i], averageDistance, sigmaDistance);
 		}
 	}
 
@@ -215,40 +218,40 @@ public class Print {
 			}
 		}
 
-		// System.out.println("average of output: " + totalOutput / Env.actorList.size() / Env.types);
-		System.out.printf("%d ", Env.actorList.size());
+		// out.println("average of output: " + totalOutput / Env.actorList.size() / Env.types);
+		out.printf("%d ", Env.actorList.size());
 		for(int i = 0; i < Env.roleNames.length + 1; i++) {
-			System.out.printf("%d ", population[i]);
+			out.printf("%d ", population[i]);
 			for(int j = 0; j < roles; j++) {
 				if(population[i] != 0) {
-					System.out.printf("%8.6f ", outcome0[i][j] / population[i]);
-					System.out.printf("%8.6f ", outcome1[i][j] / population[i]);
+					out.printf("%8.6f ", outcome0[i][j] / population[i]);
+					out.printf("%8.6f ", outcome1[i][j] / population[i]);
 				} else {
-					System.out.print("0.0 0.0 ");
+					out.print("0.0 0.0 ");
 				}
 			}
 		}
 		for(int j = 0; j < roles; j++) {
 			int pop = 0;
-			double out = 0;
+			double outcome = 0;
 			for(int i = 0; i < Env.roleNames.length + 1; i++) {
 				pop += population[i];
-				out += outcome0[i][j];
+				outcome += outcome0[i][j];
 			}
 
 			if(pop != 0) {
-				System.out.printf("%8.6f ", out / pop);
+				out.printf("%8.6f ", outcome / pop);
 			} else {
-				System.out.print("0.0 ");
+				out.print("0.0 ");
 			}
 		}
-		// System.out.printf("%8.6f%n", totalOutput / Env.actorList.size() / Env.types);
+		// out.printf("%8.6f%n", totalOutput / Env.actorList.size() / Env.types);
 		if(totalActors > 0) {
-			System.out.printf("%8.6f ", totalOutput / totalActors / Env.roles);
-			System.out.printf("%8.6f ", totalOutput1 / totalActors / Env.roles);
-			System.out.printf("%8.6f ", totalValue / totalActors);
+			out.printf("%8.6f ", totalOutput / totalActors / Env.roles);
+			out.printf("%8.6f ", totalOutput1 / totalActors / Env.roles);
+			out.printf("%8.6f ", totalValue / totalActors);
 		} else {
-			System.out.printf("%8.6f %8.6f %8.6f ", 0.0d, 0.0d, 0.0d);
+			out.printf("%8.6f %8.6f %8.6f ", 0.0d, 0.0d, 0.0d);
 		}
 	}
 
@@ -260,16 +263,16 @@ public class Print {
 		}
 		Actor actor = Env.map[xx][yy];
 		if(actor == null) {
-			System.out.println("No Actor");
+			out.println("No Actor");
 		} else {
 			for(int i = 0; i < Env.roleNames.length; i++) {
 				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 				double effort = ort.getEffort();
 				double skill = ort.getSkill();
 
-				System.out.printf("(%6.4f %6.4f) ", skill, effort);
+				out.printf("(%6.4f %6.4f) ", skill, effort);
 			}
-			System.out.println();
+			out.println();
 		}
 	}
 
@@ -281,7 +284,7 @@ public class Print {
 		keys.addAll(friendMap.keySet());
 
 		if(head) {
-			System.out.print("(" + (keys.size() + 1) + " ");
+			out.print("(" + (keys.size() + 1) + " ");
 		}
 
 		for(Actor actor: keys) {
@@ -295,11 +298,11 @@ public class Print {
 		if(max == 0) {
 			if(!head) {
 				for(int i = 0; i < keys.size(); i++) {
-					System.out.print("(1 ) ");
+					out.print("(1 ) ");
 				}
 			}
 			if(head) {
-				System.out.print(") ");
+				out.print(") ");
 			}
 			return;
 		}
@@ -332,7 +335,7 @@ public class Print {
 		}
 
 		if(head) {
-			System.out.print(") ");
+			out.print(") ");
 		}
 	}
 
@@ -379,7 +382,7 @@ public class Print {
 		});
 
 		for(Set<Actor> friend: friendList) {
-			System.out.print(friend.size() + " ");
+			out.print(friend.size() + " ");
 		}
 		*/
 
@@ -394,14 +397,14 @@ public class Print {
 			}
 			total.addAll(actor.getReverseFriends());
 			sum += size;
-			System.out.print(sum + "-" + total.size() + " ");
+			out.print(sum + "-" + total.size() + " ");
 		}
 		*/
 	}
 
 	public static void printReward() {
 		for(int i = 0; i < Env.rewardTable.length; i++) {
-			System.out.printf("%6.4f ", Env.rewardTable[i]);
+			out.printf("%6.4f ", Env.rewardTable[i]);
 		}
 	}
 }

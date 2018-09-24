@@ -53,7 +53,7 @@ public class DrawAny extends DrawPlane {
 		displayWidth = (mapWidth * cellWidth + displayMargin) * number + displayMargin;
 		displayHeight = mapHeight * cellHeight + displayMargin * 2;
 		Canvas.setTitle(Env.titleBar);
-		Canvas.show(displayWidth, displayHeight);
+		Canvas.show(displayWidth, displayHeight, Env.drawVisible);
 		Canvas.disableAutoRepaint();
 		if(Env.animationGIFFileName != null) {
 			Canvas.prepareAnimationGIF(Env.animationGIFFileName);

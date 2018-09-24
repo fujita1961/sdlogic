@@ -351,6 +351,11 @@ public class Env {
 	/**
 	 * Draw Map
 	 */
+	public static boolean drawVisible = true;
+
+	/**
+	 * Draw Map
+	 */
 	public static boolean drawMap = false;
 
 	/**
@@ -393,8 +398,14 @@ public class Env {
 	 */
 	public static String animationGIFFileName = null;
 
+
 	/**
-	 * print interval
+	 * file name for print out
+	 */
+	public static String printFileName = null;
+
+	/**
+	 * print parameters
 	 */
 	public static boolean printParameterFlag = true;
 

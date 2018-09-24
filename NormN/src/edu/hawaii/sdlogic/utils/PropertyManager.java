@@ -1,10 +1,13 @@
 package edu.hawaii.sdlogic.utils;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.Properties;
 
@@ -243,12 +246,22 @@ public class PropertyManager {
 			}
 		}
 
+		if(Env.printFileName != null) {
+			try {
+				String name = Env.printFileName;
+				PrintStream ps = new PrintStream(new FileOutputStream(new File(Env.printFileName)));
+				Print.out = ps;
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+
 		if(Env.printParameterFlag) {
 			for(Object obj: props.keySet()) {
 				String str = (String)obj;
 				String val = props.getProperty(str);
 
-				System.out.println(str + " = " + val);
+				Print.out.println(str + " = " + val);
 			}
 		}
 

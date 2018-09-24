@@ -686,7 +686,10 @@ public class Loop {
 		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
 				|| Env.printStatistics || Env.printExchangeLinksFlag || Env.printStructureFlag
 				|| Env.printRewardFlag || Env.printCenterOfGravityFlag) {
-			System.out.print((turn + 1) + " ");
+			if(Print.out != System.out) {
+				System.out.println((turn + 1));
+			}
+			Print.out.print((turn + 1) + " ");
 		}
 
 		if(Env.printStatistics) {
@@ -694,10 +697,10 @@ public class Loop {
 			if(longevityCount > 0) {
 				averageLongevity = (double)longevity / (double) longevityCount;
 			}
-			System.out.printf("%6.2f ", averageLongevity);
+			Print.out.printf("%6.2f ", averageLongevity);
 
 			for(int i = 0; i < longevityArrayCount.length; i++) {
-				System.out.printf("%d ", longevityArrayCount[i]);
+				Print.out.printf("%d ", longevityArrayCount[i]);
 			}
 
 			Print.printStatistics();
@@ -719,7 +722,7 @@ public class Loop {
 			double max = Env.entropy.printMaxEntropy();
 			Env.entropy.friendEntropy();
 			double entropy = Env.entropy.entropy();
-			System.out.print(max - entropy + " ");
+			Print.out.print(max - entropy + " ");
 		}
 
 		if(Env.printCollaborationCountFlag) {
@@ -737,7 +740,7 @@ public class Loop {
 		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
 				|| Env.printStatistics || Env.printExchangeLinksFlag || Env.printStructureFlag
 				|| Env.printRewardFlag || Env.printCenterOfGravityFlag) {
-			System.out.println();
+			Print.out.println();
 		}
 	}
 
