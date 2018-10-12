@@ -5,6 +5,7 @@ public class TestMain {
 		String[] options = {
 				// "props/test20.properties",
 				// "props/MultiPeaks.properties",
+				"props/MultiPeaksLocalized.properties",
 				// "props/Future.properties",
 				// "props/Future2.properties",
 				// "props/SimpleTwo.properties",
@@ -12,7 +13,7 @@ public class TestMain {
 				// "props/FourPoint.properties",
 				// "props/TwoPoint.properties",
 				// "props/TwoSamePoint.properties",
-				"props/TwoSamePointLocalized.properties",
+				// "props/TwoSamePointLocalized.properties",
 		};
 
 		Main.main(options);

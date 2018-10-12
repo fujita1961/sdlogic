@@ -145,7 +145,7 @@ public class SimpleExchange implements Exchange {
 					}
 
 					// capability is multiplied by friend's collaboration factor.
-					capability *= (1 + friendCapability / Env.friends);
+					capability *= (1 + friendCapability * Env.collaborationFactor / Env.friends);
 				}
 			}
 		}

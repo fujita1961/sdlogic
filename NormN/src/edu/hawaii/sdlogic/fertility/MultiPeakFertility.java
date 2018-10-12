@@ -65,6 +65,7 @@ public class MultiPeakFertility extends Fertility {
 	 */
 	public MultiPeakFertility(double peak, double field, double radiusOut, double radiusIn,
 			double lowerPeak, double lowerRadius) {
+		num = Env.fertilityPeaks;
 		this.peak = peak;
 		this.field = field;
 		this.radiusOut = radiusOut;

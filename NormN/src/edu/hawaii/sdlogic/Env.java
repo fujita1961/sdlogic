@@ -149,6 +149,11 @@ public class Env {
 	 */
 	public static String fertilityClassName = null;
 
+	/**
+	 * Fertility Multi-Peak number
+	 */
+	public static int fertilityPeaks = 9;
+
 
 	// parameters for evolutionary mechanisms
 
