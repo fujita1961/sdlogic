@@ -77,6 +77,11 @@ public class Actor {
 	private double lifeSpan;
 
 	/**
+	 * liveCondition of the actor
+	 */
+	private double liveCondition;
+
+	/**
 	 * actor object pool
 	 */
 	private static Queue<Actor> pool = new LinkedList<Actor>();
@@ -105,6 +110,7 @@ public class Actor {
 		actor.performance = 0;
 		actor.x = -1;
 		actor.y = -1;
+		actor.liveCondition = Env.liveCondition;
 	}
 
 	/**
@@ -224,6 +230,7 @@ public class Actor {
 		age = Env.rand.nextInt(Env.lifeSpan / 10);
 		lifeSpan = (int)(Env.lifeSpan + Env.rand.nextGaussian() * 10);
 		exchangeRate = Env.exchangeRate;
+		liveCondition = Env.liveCondition;
 	}
 
 	/**
@@ -431,6 +438,15 @@ public class Actor {
 				}
 			}
 		}
+
+		if(Env.variableCapability) {
+			liveCondition = actor.liveCondition + Env.sigmaLiveCondition * Env.rand.nextGaussian();
+			if(liveCondition < Env.liveCondition) {
+				liveCondition = Env.liveCondition;
+			}
+		} else {
+			liveCondition = actor.liveCondition;
+		}
 	}
 
 	/**
@@ -620,5 +636,13 @@ public class Actor {
 
 	public void setExchangeRate(double exchangeRate) {
 		this.exchangeRate = exchangeRate;
+	}
+
+	public double getLiveCondition() {
+		return liveCondition;
+	}
+
+	public void setLiveCondition(double liveCondition) {
+		this.liveCondition = liveCondition;
 	}
 }

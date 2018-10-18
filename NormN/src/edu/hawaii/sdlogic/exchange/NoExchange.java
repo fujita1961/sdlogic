@@ -17,7 +17,7 @@ public class NoExchange implements Exchange {
 			boolean satisfy = true;
 			for(int k = 0; k < Env.roles; k++) {
 				double output = actor.getOperantResource(Env.roleNames[k]).getOutput();
-				if(output < Env.liveCondition) {
+				if(output < actor.getLiveCondition()) {
 					satisfy = false;
 				}
 			}

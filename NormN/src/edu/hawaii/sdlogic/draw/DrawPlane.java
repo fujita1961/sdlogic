@@ -484,6 +484,37 @@ public class DrawPlane implements Draw {
 	}
 
 	/**
+	 * draw Live Condition
+	 * @param actor
+	 * @param left left margin
+	 * @param top top margin
+	 * @param x x coordinate
+	 * @param y y coordinate
+	 */
+	protected void drawLiveCondition(Actor actor, int left, int top, int x, int y) {
+		double live = actor.getLiveCondition();
+		int red = 0;
+		int green = 0;
+		int blue = 0;
+
+		if(live < 1.0) {
+			red = 255;
+		} else if(live < 1.5) {
+			red = (int)((1.5 - live) * 2 * 255);
+			green = (int)((live - 1.0) * 2 * 255);
+		} else if(live < 2.0){
+			green = (int)((2.0 - live) * 2 * 255);
+			blue = (int)((live - 1.5) * 2 * 255);
+		} else {
+			blue = 255;
+		}
+
+		Canvas.setColor(red, green, blue);
+		Canvas.fillRect(left + x * cellWidth + displayMargin,
+				top + y * cellHeight + displayMargin, cellWidth, cellHeight);
+	}
+
+	/**
 	 * draw method
 	 */
 	@Override

@@ -167,6 +167,16 @@ public class Env {
 	 */
 	public static double liveCondition = 1.0;
 
+	/**
+	 * Flag for changing live condition dynamically
+	 */
+	public static boolean variableLiveCondition = false;
+
+	/**
+	 * standard deviation of live condition change at inheritance.
+	 */
+	public static double sigmaLiveCondition = 0.01;
+
 	/*
 	 * There are three types of evolutionary mechanisms.
 	 *   survive mode: Population does not change. The actors that do not satisfy the condition imidiately die,
@@ -394,6 +404,11 @@ public class Env {
 	public static boolean drawExchangeLocation = false;
 
 	/**
+	 * Draw Live Condition
+	 */
+	public static boolean drawLiveCondition = false;
+
+	/**
 	 * interval for animationGIF
 	 */
 	public static int animationGIFInterval = 20;
@@ -458,6 +473,11 @@ public class Env {
 	 * print reward table
 	 */
 	public static boolean printCenterOfGravityFlag = false;
+
+	/**
+	 * print live condition
+	 */
+	public static boolean printLiveConditionFlag = false;
 
 	/**
 	 * title bar on/off

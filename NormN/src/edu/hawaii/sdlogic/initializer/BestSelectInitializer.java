@@ -41,7 +41,8 @@ public class BestSelectInitializer extends Initializer {
 		Env.actorList = new ArrayList<Actor>();
 
 		double envSigmaOutput = Env.sigmaOutput;
-		double envLiveCondition = Env.liveCondition;
+		// double envLiveCondition = Env.liveCondition;
+		double liveCondition = Env.liveCondition;
 		Exchange envExchange = Env.exchange;
 		boolean envFriendFlag = Env.friendFlag;
 		int envWindowSize = Env.windowSize;
@@ -82,7 +83,7 @@ public class BestSelectInitializer extends Initializer {
 		}
 
 		// Env.exchange = new NoExchange();
-		Env.liveCondition = 1.0;
+		liveCondition = 1.0;
 		Set<Actor> satisfiedActors = new HashSet<Actor>();
 		// double condition = 0;
 
@@ -191,7 +192,7 @@ public class BestSelectInitializer extends Initializer {
 					for(int j = 0; j < actors; j++) {
 						Actor actor = candidates[i * children + k][j];
 
-						if(actorArray[i][j].getPerformance() < Env.liveCondition) {
+						if(actorArray[i][j].getPerformance() < liveCondition) {
 							actor.imitate(actorArray[i][j], Env.mapWidth / 2, Env.mapHeight / 2);
 						} else {
 							cloneActor(actorArray[i][j], actor);
@@ -213,7 +214,7 @@ public class BestSelectInitializer extends Initializer {
 			int success = pops[0].satisfiedActors;
 
 			if(success > actors * 0.8) {
-				if(Env.liveCondition > 1.01) {
+				if(liveCondition > 1.01) {
 					Env.actorList.clear();
 					for(int xx = 0; xx < Env.mapWidth; xx++) {
 						for(int yy = 0; yy < Env.mapHeight; yy++) {
@@ -250,7 +251,7 @@ public class BestSelectInitializer extends Initializer {
 
 					Env.draw.draw();
 
-					Env.liveCondition += 0.1;
+					liveCondition += 0.1;
 					// best = 0;
 				}
 			} else {
@@ -263,7 +264,7 @@ public class BestSelectInitializer extends Initializer {
 				// }
 			}
 
-			System.out.print(Env.liveCondition + ", ");
+			System.out.print(liveCondition + ", ");
 
 			for(int i = 0; i < pools; i++) {
 				System.out.print(pops[i].satisfiedActors + " ");
@@ -289,7 +290,7 @@ public class BestSelectInitializer extends Initializer {
 		Env.draw.draw();
 
 		Env.sigmaOutput = envSigmaOutput;
-		Env.liveCondition = envLiveCondition;
+		// Env.liveCondition = envLiveCondition;
 		Env.exchange = envExchange;
 		Env.friendFlag = envFriendFlag;
 		Env.windowSize = envWindowSize;

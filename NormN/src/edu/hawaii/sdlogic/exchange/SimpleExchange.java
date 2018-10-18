@@ -31,7 +31,7 @@ public class SimpleExchange implements Exchange {
 			for(int i = 0; i < Env.roles; i++) {
 				OperantResource otr = actor.getOperantResource(Env.roleNames[i]);
 				double outcome = otr.getOutput();
-				if(outcome < Env.liveCondition - Env.EPSILON) {
+				if(outcome < actor.getLiveCondition() - Env.EPSILON) {
 					System.err.println(outcome);;
 					throw new RuntimeException("Satisfy check error");
 				}
@@ -49,33 +49,34 @@ public class SimpleExchange implements Exchange {
 		int roles = Env.roles + Env.storeRoles;
 
 		double[] outputs = new double[roles];
-		double liveCondition = Env.liveCondition * roles;
+		// double liveConditionRoles = Env.liveCondition * roles;
 
 		for(Actor actor: Env.actorList) {
 			// double total = 0;
+			double liveCondition = actor.getLiveCondition();
 
 			boolean satisfy = true;
 			double sum = 0;
 			for(int k = 0; k < Env.roles; k++) {
 				outputs[k] = actor.getOperantResource(Env.roleNames[k]).getOutput();
 				// total += outputs[k];
-				if(outputs[k] < Env.liveCondition) {
+				if(outputs[k] < liveCondition) {
 					satisfy = false;
 				}
 
 				if(Env.exchangeRate > 1.0) {
-					double diff = outputs[k] - Env.liveCondition;
+					double diff = outputs[k] - liveCondition;
 					if(diff < 0) {
 						sum += diff * Env.exchangeRate;
 					} else {
 						sum += diff;
 					}
 				} else {
-					sum += outputs[k] - Env.liveCondition;
+					sum += outputs[k] - liveCondition;
 				}
 			}
 
-			// if(total > liveCondition) {
+			// if(total > liveConditionRoles) {
 				if(satisfy) {
 					// complete satisfaction
 					satisfiedActors.add(actor);
@@ -88,7 +89,7 @@ public class SimpleExchange implements Exchange {
 						// sum must be more than 0 when the actor is registerd in extras list.
 
 						for(int k = 0; k < Env.roles; k++) {
-							if(outputs[k] >= Env.liveCondition) {
+							if(outputs[k] >= liveCondition) {
 								extras[k].add(actor);
 							}
 						}
@@ -176,10 +177,12 @@ public class SimpleExchange implements Exchange {
 		// int surplusVolume = 0;
 		// int stockVolume = 0;
 
+		double liveCondition = actor.getLiveCondition();
+
 		for(int j = 0; j < Env.roles; j++) {
 			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[j]);
 			double ownOutcome = ownOtr.getOutput();
-			double diff = ownOutcome - Env.liveCondition;
+			double diff = ownOutcome - liveCondition;
 			if(diff > 0) {
 				extraVolume[j] = diff;
 				extraCount++;
@@ -277,12 +280,14 @@ public class SimpleExchange implements Exchange {
 				boolean endFlag = false;
 
 				int satisfiedCount = 0;
+				double partnerLiveCondition = partner.getLiveCondition();
+
 				for(int j = 0; j < Env.roles; j++) {
 					OperantResource partnerOtr = partner.getOperantResource(Env.roleNames[j]);
 					double partnerOriginalVolume = partnerOtr.getOutput();
 
 					// original amount that partner wants (negative value)
-					double diff = partnerOriginalVolume - Env.liveCondition;
+					double diff = partnerOriginalVolume - partnerLiveCondition;
 					if(diff < 0) {
 						if(!Env.enableStoring2) {
 							// original amount that actor can pay
@@ -418,7 +423,7 @@ public class SimpleExchange implements Exchange {
 			if(extraVolume[j] < -Env.EPSILON)
 				System.out.println("Volume is negative!");
 			OperantResource ownOtr = actor.getOperantResource(Env.roleNames[j]);
-			ownOtr.setOutput(extraVolume[j] + Env.liveCondition);
+			ownOtr.setOutput(extraVolume[j] + liveCondition);
 		}
 
 		for(int j = 0; j < Env.storeRoles; j++) {
@@ -559,6 +564,8 @@ public class SimpleExchange implements Exchange {
 				int currentX = -1;
 				int currentY = -1;
 
+				double liveCondition = actor.getLiveCondition();
+
 				for(currentIteration = 0; currentIteration < Env.searchIteration; currentIteration++) {
 					// pick up a candidate of exchanging parner.
 					Actor partner = null;
@@ -573,7 +580,7 @@ public class SimpleExchange implements Exchange {
 					}
 
 					// If Env.stockRoles > 0 and total does not satisfy the living conditions,
-					if(total < Env.liveCondition * Env.roles) {
+					if(total < liveCondition * Env.roles) {
 						for(int k = 0; k < Env.storeRoles && !satisfiedActors.isEmpty(); k++) {
 
 							int stockIndex = Env.roles + k;
@@ -611,6 +618,7 @@ public class SimpleExchange implements Exchange {
 								}
 
 								double distance = actor.distance(partner);
+								double partnerLiveCondition = partner.getLiveCondition();
 
 								// distance must be less than the search limit.
 								if(distance < searchLimit * exchangeCapability) {
@@ -621,14 +629,14 @@ public class SimpleExchange implements Exchange {
 										double partnerOriginalVolume = partnerOtr.getOutput();
 
 										// diff must be positive or zero
-										double diff = partnerOriginalVolume - Env.liveCondition;
+										double diff = partnerOriginalVolume - partnerLiveCondition;
 
 										if(diff > 0) {
 											if(!Env.enableStoring2) {
 												if(outputs[stockIndex] * exchangeRate > diff) {
 													outputs[stockIndex] -= diff / exchangeRate;
 													outputs[j] += diff;
-													partnerOtr.setOutput(Env.liveCondition);
+													partnerOtr.setOutput(partnerLiveCondition);
 													OperantResource valueOtr = partner.getOperantResource(Env.roleNames[stockIndex]);
 													valueOtr.addOutput(diff / exchangeRate);
 												} else {
@@ -683,7 +691,7 @@ public class SimpleExchange implements Exchange {
 
 					// System.out.println(currentIteration + ", " + minIndex + ", " + total);
 
-					if(localized && total < Env.liveCondition * (1.0 / Env.exchangeRate + (Env.roles - 1))
+					if(localized && total < liveCondition * (1.0 / Env.exchangeRate + (Env.roles - 1))
 							&& minIndex >= 0) {
 						// continue to use the same minIndex
 					} else {
@@ -812,6 +820,8 @@ public class SimpleExchange implements Exchange {
 						distance = actor.distance(partner);
 					}
 
+					double partnerLiveCondition = partner.getLiveCondition();
+
 					// distance must be less than the search limit.
 					if(distance < searchLimit * exchangeCapability) {
 						searchLimit -= distance / exchangeCapability;
@@ -827,7 +837,7 @@ public class SimpleExchange implements Exchange {
 						for(int k = 0; k < Env.roles; k++) {
 							partnerOutputs[k] = partner.getOperantResource(Env.roleNames[k]).getOutput();
 							if(Env.exchangeRate > 1.0) {
-								double diff = partnerOutputs[k] - Env.liveCondition;
+								double diff = partnerOutputs[k] - partnerLiveCondition;
 								if(diff < 0) {
 									sum += diff * exchangeRate;
 									minus += diff * exchangeRate;
@@ -835,7 +845,7 @@ public class SimpleExchange implements Exchange {
 									sum += diff;
 								}
 							} else {
-								sum += partnerOutputs[k] - Env.liveCondition;
+								sum += partnerOutputs[k] - partnerLiveCondition;
 							}
 						}
 
@@ -843,7 +853,7 @@ public class SimpleExchange implements Exchange {
 						if(sum > 0) {
 							double minus0 = minus;
 							for(int k = 0; k < Env.roles; k++) {
-								double plus = partnerOutputs[k] - Env.liveCondition;
+								double plus = partnerOutputs[k] - partnerLiveCondition;
 								if(plus > 0) {
 									if(Env.learnFlag) {
 										incPartner.add(Env.roleNames[k]);
@@ -860,22 +870,22 @@ public class SimpleExchange implements Exchange {
 										if(minus0 + plus >= 0) {
 											partner.getOperantResource(Env.roleNames[k]).addOutput(minus0);
 											if(Env.DEBUG) {
-												if(partner.getOperantResource(Env.roleNames[k]).getOutput() < Env.liveCondition - Env.EPSILON) {
+												if(partner.getOperantResource(Env.roleNames[k]).getOutput() < partnerLiveCondition - Env.EPSILON) {
 													System.err.printf("minus0 = %f, plus = %f%n", minus0, plus);
 													System.err.println("Strange at 721");
 												}
 											}
 											minus0 = 0;
 										} else {
-											partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
+											partner.getOperantResource(Env.roleNames[k]).setOutput(partnerLiveCondition);
 											minus0 += plus;
 										}
 									} else {
-										partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
+										partner.getOperantResource(Env.roleNames[k]).setOutput(partnerLiveCondition);
 									}
 								} else {
 									// set the partner's output just to the living condition.
-									partner.getOperantResource(Env.roleNames[k]).setOutput(Env.liveCondition);
+									partner.getOperantResource(Env.roleNames[k]).setOutput(partnerLiveCondition);
 								}
 							}
 
@@ -893,7 +903,7 @@ public class SimpleExchange implements Exchange {
 							// add exchanging margin to the actor's output
 							boolean satisfy = true;
 							for(int k = 0; k < Env.roles; k++) {
-								double plus = partnerOutputs[k] - Env.liveCondition;
+								double plus = partnerOutputs[k] - partnerLiveCondition;
 								if(Env.exchangeRate > 1.0) {
 									if(plus > 0) {
 										if(minus + plus >= 0) {
@@ -909,7 +919,7 @@ public class SimpleExchange implements Exchange {
 								} else {
 									outputs[k] += plus;
 								}
-								if(outputs[k] < Env.liveCondition) {
+								if(outputs[k] < liveCondition) {
 									satisfy = false;
 								}
 							}
@@ -1021,7 +1031,7 @@ public class SimpleExchange implements Exchange {
 						for(int k = 0; k < roles; k++) {
 							partnerOutputs[k] = partner.getOperantResource(Env.roleNames[k]).getOutput();
 
-							if(partnerOutputs[k] + outputs[k] < Env.liveCondition * 2) {
+							if(partnerOutputs[k] + outputs[k] < partnerLiveCondition * 2) {
 								satisfy = false;
 								break;
 							}
@@ -1029,11 +1039,11 @@ public class SimpleExchange implements Exchange {
 
 						if(satisfy) {
 							for(int k = 0; k < roles; k++) {
-								if(partnerOutputs[k] >= Env.liveCondition) {
+								if(partnerOutputs[k] >= partnerLiveCondition) {
 									extras[k].remove(partner);
 								}
 
-								if(outputs[k] >= Env.liveCondition) {
+								if(outputs[k] >= partnerLiveCondition) {
 									extras[k].remove(actor);
 								}
 
@@ -1052,13 +1062,13 @@ public class SimpleExchange implements Exchange {
 								decPartner.clear();
 
 								for(int k = 0; k < roles; k++) {
-									if(partnerOutputs[k] >= Env.liveCondition) {
+									if(partnerOutputs[k] >= partnerLiveCondition) {
 										incPartner.add(Env.roleNames[k]);
 									} else {
 										decPartner.add(Env.roleNames[k]);
 									}
 
-									if(outputs[k] >= Env.liveCondition) {
+									if(outputs[k] >= partnerLiveCondition) {
 										inc.add(Env.roleNames[k]);
 									} else {
 										dec.add(Env.roleNames[k]);

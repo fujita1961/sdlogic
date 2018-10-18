@@ -50,6 +50,10 @@ public class DrawAny extends DrawPlane {
 			number++;
 		}
 
+		if(Env.drawLiveCondition) {
+			number++;
+		}
+
 		displayWidth = (mapWidth * cellWidth + displayMargin) * number + displayMargin;
 		displayHeight = mapHeight * cellHeight + displayMargin * 2;
 		Canvas.setTitle(Env.titleBar);
@@ -108,6 +112,11 @@ public class DrawAny extends DrawPlane {
 
 			if(Env.drawExchangeLocation) {
 				drawExchangeLocation(actor, left, 0, x, y, rgb);
+				left +=  mapWidth * cellWidth + displayMargin;
+			}
+
+			if(Env.drawLiveCondition) {
+				drawLiveCondition(actor, left, 0, x, y);
 				left +=  mapWidth * cellWidth + displayMargin;
 			}
 		}

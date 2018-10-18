@@ -43,6 +43,7 @@ public class Loop {
 		// clear share value
 		if(Env.enableStoring || Env.enableStoring2) {
 			for(Actor actor: Env.actorList) {
+				double liveCondition = actor.getLiveCondition();
 				for(int i = 0; i < Env.storeRoles; i++) {
 					OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
 					OperantResource stockOrt = actor.getOperantResource(Env.roleNames[Env.roles + i]);
@@ -54,8 +55,8 @@ public class Loop {
 					if(output < -Env.EPSILON)
 						System.out.println("Output Strange");
 					if(Env.enableStoring2) {
-						if(output - Env.liveCondition < volume * Env.storeRate) {
-							volume = output - Env.liveCondition;
+						if(output - liveCondition < volume * Env.storeRate) {
+							volume = output - liveCondition;
 						} else {
 							volume *= Env.storeRate;
 						}
@@ -456,115 +457,11 @@ public class Loop {
 					if(age % birth == 0) {
 						// if an actor does not reach the life span, it generates a child every 5 years.
 
-						boolean success = false;
-						int count = 0;
-						for(int j = 0; j < 10 && !success; j++) {
-							int ix;
-							int iy;
-
-							int x0 = actor.getX();
-							int y0 = actor.getY();
-
-							// ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
-							// iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
-
-							ix = (int)(Env.rand.nextGaussian() * Env.windowSize);
-							iy = (int)(Env.rand.nextGaussian() * Env.windowSize);
-
-							// new location
-							int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
-							int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
-
-							boolean cont = false;
-
-							for(int i = 0; i < count; i++) {
-								if(xy[i][0] == xx && xy[i][1] == yy) {
-									cont = true;
-								}
-							}
-
-							if(cont) {
-								continue;
-							}
-
-							Actor isEmpty = Env.map[xx][yy];
-
-							if(isEmpty == null) {
-								// empty location is found.
-								xy[count][0] = xx;
-								xy[count][1] = yy;
-								success = true;
-								if(count++ >= places) {
-									break;
-								}
-							}
+						if(Env.variableLiveCondition && (actor.getLiveCondition() - 1) * 10 > Env.rand.nextDouble()) {
+							makeChildren(actor, addActors, places, xy, reward, min, birth);
 						}
 
-						// if empty space is found, a new child imitate his parent.
-						if(success) {
-							Actor newActor = Actor.getInstance();
-							newActor.init();
-
-							// the first age is given by a random value less than 5 years.
-							newActor.setAge(Env.rand.nextInt(birth));
-
-							if(count == 1) {
-								Env.map[xy[0][0]][xy[0][1]] = newActor;
-								addActors.add(newActor);
-								newActor.setXY(xy[0][0], xy[0][1]);
-							} else {
-								// when Env.recognitionFlag is true
-								double total = 0;
-								double emin = Double.MAX_VALUE;
-
-								for(int i = 0; i < count; i++) {
-									double entropy = Env.entropy.primitiveContinuousEntropy(xy[i][0], xy[i][1], 1, false);
-									// double entropy = Env.entropy.primitiveEntropy(xy[i][0], xy[i][1], 1, false);
-									int ientropy = (int)(entropy * 10);
-									if(ientropy >= Env.rewardTable.length) ientropy = Env.rewardTable.length - 1;
-									else if(ientropy < 0) ientropy = 0;
-									reward[i] = Env.rewardTable[ientropy];
-
-									if(reward[i] < emin) emin = reward[i];
-									total += reward[i];
-								}
-
-								double diff = total - min * count;
-
-								double rand = Env.rand.nextDouble() * diff;
-
-								for(int i = 0; i < count; i++) {
-									diff -= reward[i] - min;
-									if(diff <= rand) {
-										Env.map[xy[i][0]][xy[i][1]] = newActor;
-										addActors.add(newActor);
-										newActor.setXY(xy[i][0], xy[i][1]);
-
-										break;
-									}
-								}
-							}
-
-							if(Env.DEBUG) {
-								for(int i = 0; i < Env.roleNames.length; i++) {
-									OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
-									double outcome = ort.getOutput();
-									if(outcome < 0) {
-										System.err.println("Strange at 356");
-									}
-								}
-							}
-							newActor.imitate(actor, true);
-							if(Env.DEBUG) {
-								for(int i = 0; i < Env.roleNames.length; i++) {
-									OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
-									double outcome = ort.getOutput();
-									if(outcome < 0) {
-										System.err.println("Strange at 356");
-									}
-								}
-							}
-						}
+						makeChildren(actor, addActors, places, xy, reward, min, birth);
 					}
 				}
 
@@ -622,8 +519,8 @@ public class Loop {
 				counter = 0;
 
 				for(Actor actor: Env.actorList) {
-					//if(actor.getPerformance() <= min || actor.getPerformance() < Env.liveCondition * 0.8) {
-					// if(actor.getPerformance() < Env.liveCondition * 1.0) {
+					//if(actor.getPerformance() <= min || actor.getPerformance() < actor.getLiveCondition() * 0.8) {
+					// if(actor.getPerformance() < actor.getLiveCondition() * 1.0) {
 					if(actor.getPerformance() <= min) {
 						if(counter < minCounter) {
 							// deathList[counter++] = actor;
@@ -682,15 +579,134 @@ public class Loop {
 		return true;
 	}
 
+	private static void makeChildren(Actor actor, List<Actor> addActors, int places,
+			int[][] xy, double[] reward, double min, int birth) {
+		boolean success = false;
+		int count = 0;
+		for(int j = 0; j < 10 && !success; j++) {
+			int ix;
+			int iy;
+
+			int x0 = actor.getX();
+			int y0 = actor.getY();
+
+			// ix = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+			// iy = Env.rand.nextInt(Env.windowSize * 2 + 1) - Env.windowSize;
+
+			ix = (int)(Env.rand.nextGaussian() * Env.windowSize);
+			iy = (int)(Env.rand.nextGaussian() * Env.windowSize);
+
+			// new location
+			int xx = (x0 + ix + Env.mapWidth) % Env.mapWidth;
+			int yy = (y0 + iy + Env.mapHeight) % Env.mapHeight;
+
+			boolean cont = false;
+
+			for(int i = 0; i < count; i++) {
+				if(xy[i][0] == xx && xy[i][1] == yy) {
+					cont = true;
+				}
+			}
+
+			if(cont) {
+				continue;
+			}
+
+			Actor isEmpty = Env.map[xx][yy];
+
+			if(isEmpty == null) {
+				// empty location is found.
+				xy[count][0] = xx;
+				xy[count][1] = yy;
+				success = true;
+				if(count++ >= places) {
+					break;
+				}
+			}
+		}
+
+		// if empty space is found, a new child imitate his parent.
+		if(success) {
+			Actor newActor = Actor.getInstance();
+			newActor.init();
+
+			// the first age is given by a random value less than 5 years.
+			newActor.setAge(Env.rand.nextInt(birth));
+
+			if(count == 1) {
+				Env.map[xy[0][0]][xy[0][1]] = newActor;
+				addActors.add(newActor);
+				newActor.setXY(xy[0][0], xy[0][1]);
+			} else {
+				// when Env.recognitionFlag is true
+				double total = 0;
+				double emin = Double.MAX_VALUE;
+
+				for(int i = 0; i < count; i++) {
+					double entropy = Env.entropy.primitiveContinuousEntropy(xy[i][0], xy[i][1], 1, false);
+					// double entropy = Env.entropy.primitiveEntropy(xy[i][0], xy[i][1], 1, false);
+					int ientropy = (int)(entropy * 10);
+					if(ientropy >= Env.rewardTable.length) ientropy = Env.rewardTable.length - 1;
+					else if(ientropy < 0) ientropy = 0;
+					reward[i] = Env.rewardTable[ientropy];
+
+					if(reward[i] < emin) emin = reward[i];
+					total += reward[i];
+				}
+
+				double diff = total - min * count;
+
+				double rand = Env.rand.nextDouble() * diff;
+
+				for(int i = 0; i < count; i++) {
+					diff -= reward[i] - min;
+					if(diff <= rand) {
+						Env.map[xy[i][0]][xy[i][1]] = newActor;
+						addActors.add(newActor);
+						newActor.setXY(xy[i][0], xy[i][1]);
+
+						break;
+					}
+				}
+			}
+
+			if(Env.DEBUG) {
+				for(int i = 0; i < Env.roleNames.length; i++) {
+					OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
+					double outcome = ort.getOutput();
+					if(outcome < 0) {
+						System.err.println("Strange at 356");
+					}
+				}
+			}
+			newActor.imitate(actor, true);
+			if(Env.DEBUG) {
+				for(int i = 0; i < Env.roleNames.length; i++) {
+					OperantResource ort = newActor.getOperantResource(Env.roleNames[i]);
+					double outcome = ort.getOutput();
+					if(outcome < 0) {
+						System.err.println("Strange at 356");
+					}
+				}
+			}
+		}
+	}
+
 	private static void print(int turn) {
 		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
 				|| Env.printStatistics || Env.printExchangeLinksFlag || Env.printStructureFlag
-				|| Env.printRewardFlag || Env.printCenterOfGravityFlag) {
+				|| Env.printRewardFlag || Env.printCenterOfGravityFlag
+				|| Env.printLiveConditionFlag) {
 			if(Print.out != System.out) {
 				System.out.println((turn + 1));
 			}
 			Print.out.print((turn + 1) + " ");
 		}
+
+		if(Env.printLiveConditionFlag) {
+			Print.printLiveCondition();
+		}
+
 
 		if(Env.printStatistics) {
 			double averageLongevity = 0;
@@ -739,7 +755,8 @@ public class Loop {
 
 		if(Env.printCollaborationCountFlag || Env.printSkillLevelsFlag || Env.printEntropyFlag
 				|| Env.printStatistics || Env.printExchangeLinksFlag || Env.printStructureFlag
-				|| Env.printRewardFlag || Env.printCenterOfGravityFlag) {
+				|| Env.printRewardFlag || Env.printCenterOfGravityFlag
+				|| Env.printLiveConditionFlag) {
 			Print.out.println();
 		}
 	}

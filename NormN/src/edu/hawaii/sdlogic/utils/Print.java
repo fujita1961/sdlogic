@@ -407,4 +407,21 @@ public class Print {
 			out.printf("%6.4f ", Env.rewardTable[i]);
 		}
 	}
+
+	public static void printLiveCondition() {
+		double sum = 0;
+		double sum2 = 0;
+
+		for(Actor actor: Env.actorList) {
+			double live = actor.getLiveCondition();
+			sum += live;
+			sum2 += live * live;
+		}
+
+		double ave = sum / Env.actorList.size();
+		double sigma = Math.sqrt(sum2 / Env.actorList.size() - ave * ave);
+
+		out.printf("%6.4f %6.4f", ave, sigma);
+	}
+
 }
