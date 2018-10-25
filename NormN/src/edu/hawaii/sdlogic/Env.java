@@ -225,6 +225,11 @@ public class Env {
 	 */
 	public static double searchLimit = 2000;
 
+	/**
+	 * the maximum distance for one-time sarching exchange partners.
+	 */
+	public static double searchEachLimit = -1;
+
 	// collaboration parameters
 
 	/**

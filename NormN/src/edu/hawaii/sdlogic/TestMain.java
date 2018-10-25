@@ -6,7 +6,8 @@ public class TestMain {
 				// "props/test20.properties",
 				// "props/MultiPeaks.properties",
 				// "props/MultiPeaksLocalized.properties",
-				// "props/MultiPeaksLocalizedVariableLive.properties",
+				"props/MultiPeaksLocalizedVariableLive.properties",
+				// "props/MultiPeaksLocalizedVariableLive3.properties",
 				// "props/Future.properties",
 				// "props/Future2.properties",
 				// "props/SimpleTwo.properties",
@@ -15,7 +16,7 @@ public class TestMain {
 				// "props/TwoPoint.properties",
 				// "props/TwoSamePoint.properties",
 				// "props/TwoSamePointLocalized.properties",
-				"props/TwoSamePointLocalizedVariableLive.properties",
+				// "props/TwoSamePointLocalizedVariableLive.properties",
 		};
 
 		Main.main(options);

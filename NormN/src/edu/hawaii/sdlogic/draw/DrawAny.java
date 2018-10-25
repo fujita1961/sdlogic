@@ -2,6 +2,9 @@ package edu.hawaii.sdlogic.draw;
 
 import static edu.hawaii.sdlogic.Env.*;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
 import edu.hawaii.utils.Canvas;
@@ -60,7 +63,14 @@ public class DrawAny extends DrawPlane {
 		Canvas.show(displayWidth, displayHeight, Env.drawVisible);
 		Canvas.disableAutoRepaint();
 		if(Env.animationGIFFileName != null) {
-			Canvas.prepareAnimationGIF(Env.animationGIFFileName);
+			String fileName = Env.animationGIFFileName;
+			if(!fileName.endsWith(".gif")) {
+				Calendar cal = Calendar.getInstance();
+				SimpleDateFormat sdf = new SimpleDateFormat("_yyyyMMdd_HHmmss");
+				fileName = fileName + sdf.format(cal.getTime()) + ".gif";
+			}
+
+			Canvas.prepareAnimationGIF(fileName);
 		}
 	}
 

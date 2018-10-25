@@ -769,56 +769,180 @@ public class SimpleExchange implements Exchange {
 						}
 					}
 
+					double distance = 0;
+
 					if(partner == null) {
-						// pick up a candidate of exchanging parner.
-						int index = Env.rand.nextInt(extras[minIndex].size());
-						partner = extras[minIndex].get(index);
-						if(memorized && !exchangers.contains(partner)) {
-							exchangers.addFirst(partner);
-							exchangerIndex[minIndex]++;
+						if(Env.searchEachLimit > 0) {
+							// capability is a multiplication of effort and skil.
+							OperantResource otr = actor.getOperantResource(Term.EXCHANGING);
+							double capability = otr.getEffort() * otr.getSkill();
+
+							int loopTimes = 100;
+
+							while(loopTimes >= 0) {
+								if(extras[minIndex].size() < 50) {
+									double min = Double.MAX_VALUE;
+
+									for(Actor partner0: extras[minIndex]) {
+										if(localized) {
+											currentX = partner0.getX();
+											currentY = partner0.getY();
+
+											distance = localizedDistance(actor, partner0,
+													currentX, currentY, lastX, lastY);
+										} else {
+											distance = actor.distance(partner0);
+
+										}
+
+										if(distance < min) {
+											partner = partner0;
+											min = distance;
+										}
+									}
+									distance = min;
+
+									if(localized) {
+										int locations[][] = actor.getExchangingLocations();
+										currentX = partner.getX();
+										currentY = partner.getY();
+
+										// if no location is memorized, store the current location
+										// if(locations[minIndex][0] < 0 && locations[minIndex][1] < 0) {
+										locations[minIndex][0] = currentX;
+										locations[minIndex][1] = currentY;
+										lastX = currentX;
+										lastY = currentY;
+									} else if(memorized && !exchangers.contains(partner)) {
+										exchangers.addFirst(partner);
+										exchangerIndex[minIndex]++;
+									}
+									break;
+								}
+
+
+								/*
+								double limit = Env.searchEachLimit * capability * 2;
+								// it is a square limit to a circle.
+								int x = (int)((Env.rand.nextDouble() - 0.5) * limit);
+								int y = (int)((Env.rand.nextDouble() - 0.5) * limit);
+
+								if(localized && lastX >= 0 && lastY >= 0) {
+									x += lastX;
+									y += lastY;
+								} else {
+									x += actor.getX();
+									y += actor.getY();
+								}
+
+								x = (x + Env.mapWidth) % Env.mapWidth;
+								y = (y + Env.mapHeight) % Env.mapHeight;
+
+								partner = Env.map[x][y];
+
+								if(partner == null || !extras[minIndex].contains(partner)) {
+									loopTimes--;
+									continue;
+								}
+								*/
+
+								int index = Env.rand.nextInt(extras[minIndex].size());
+								partner = extras[minIndex].get(index);
+
+								if(localized) {
+									currentX = partner.getX();
+									currentY = partner.getY();
+
+									/*
+									int locations[][] = actor.getExchangingLocations();
+
+									// if no location is memorized, store the current location
+									// if(locations[minIndex][0] < 0 && locations[minIndex][1] < 0) {
+									locations[minIndex][0] = currentX;
+									locations[minIndex][1] = currentY;
+									// }
+									 */
+									distance = localizedDistance(actor, partner,
+											currentX, currentY, lastX, lastY);
+									lastX = currentX;
+									lastY = currentY;
+								} else {
+									// int index = Env.rand.nextInt(extras[minIndex].size());
+									// partner = extras[minIndex].get(index);
+									distance = actor.distance(partner);
+
+									/*
+									if(memorized && !exchangers.contains(partner)) {
+										exchangers.addFirst(partner);
+										exchangerIndex[minIndex]++;
+									}
+									*/
+								}
+
+								if(distance < Env.searchEachLimit * capability) {
+									if(localized) {
+										int locations[][] = actor.getExchangingLocations();
+
+										// if no location is memorized, store the current location
+										// if(locations[minIndex][0] < 0 && locations[minIndex][1] < 0) {
+										locations[minIndex][0] = currentX;
+										locations[minIndex][1] = currentY;
+										lastX = currentX;
+										lastY = currentY;
+									}
+
+									if(memorized && !exchangers.contains(partner)) {
+										exchangers.addFirst(partner);
+										exchangerIndex[minIndex]++;
+									}
+									break;
+								} else {
+									loopTimes--;
+								}
+							}
 						}
 
-						if(localized) {
-							currentX = partner.getX();
-							currentY = partner.getY();
+						// Env.searchEachLimit <= 0 or partner cannot be found
+						if(partner == null) {
+							// pick up a candidate of exchanging parner.
+							int index = Env.rand.nextInt(extras[minIndex].size());
+							partner = extras[minIndex].get(index);
+							if(memorized && !exchangers.contains(partner)) {
+								exchangers.addFirst(partner);
+								exchangerIndex[minIndex]++;
+							}
 
-							int locations[][] = actor.getExchangingLocations();
+							if(localized) {
+								currentX = partner.getX();
+								currentY = partner.getY();
 
-							// if no location is memorized, store the current location
-							// if(locations[minIndex][0] < 0 && locations[minIndex][1] < 0) {
+								int locations[][] = actor.getExchangingLocations();
+
+								// if no location is memorized, store the current location
+								// if(locations[minIndex][0] < 0 && locations[minIndex][1] < 0) {
 								locations[minIndex][0] = currentX;
 								locations[minIndex][1] = currentY;
-							// }
+								// }
+								distance = localizedDistance(actor, partner,
+										currentX, currentY, lastX, lastY);
+								lastX = currentX;
+								lastY = currentY;
+							} else {
+								distance = actor.distance(partner);
+							}
+						}
+					} else {
+						if(localized) {
+							distance = localizedDistance(actor, partner,
+									currentX, currentY, lastX, lastY);
+							lastX = currentX;
+							lastY = currentY;
+						} else {
+							distance = actor.distance(partner);
 						}
 					}
 
 					lastMinIndex = minIndex;
-
-					double distance;
-
-					if(localized) {
-						if(lastX >= 0 && lastY >= 0) {
-							// torus distance
-							int x = currentX - lastX;
-							int y = currentY - lastY;
-							if(x < 0) x = -x;
-							if(x > Env.mapWidth - x) {
-								x = Env.mapWidth - x;
-							}
-							if(y < 0) y = -y;
-							if(y > Env.mapHeight - y) {
-								y = Env.mapHeight - y;
-							}
-
-							distance = Math.sqrt(x * x + y * y);
-						} else {
-							distance = actor.distance(partner);
-						}
-						lastX = currentX;
-						lastY = currentY;
-					} else {
-						distance = actor.distance(partner);
-					}
 
 					double partnerLiveCondition = partner.getLiveCondition();
 
@@ -1091,5 +1215,29 @@ public class SimpleExchange implements Exchange {
 				*/
 			}
 		}
+	}
+
+	private double localizedDistance(Actor actor, Actor partner,
+			int currentX, int currentY, int lastX, int lastY) {
+		double distance;
+
+		if(lastX >= 0 && lastY >= 0) {
+			// torus distance
+			int x = currentX - lastX;
+			int y = currentY - lastY;
+			if(x < 0) x = -x;
+			if(x > Env.mapWidth - x) {
+				x = Env.mapWidth - x;
+			}
+			if(y < 0) y = -y;
+			if(y > Env.mapHeight - y) {
+				y = Env.mapHeight - y;
+			}
+
+			distance = Math.sqrt(x * x + y * y);
+		} else {
+			distance = actor.distance(partner);
+		}
+		return distance;
 	}
 }
