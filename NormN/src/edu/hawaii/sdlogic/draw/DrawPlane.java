@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
 import edu.hawaii.sdlogic.Term;
-import edu.hawaii.utils.Canvas;
+import edu.hawaii.utils.Canvas2;
 
 /**
  * draw plane for actor map and collaboration links
@@ -19,18 +19,21 @@ import edu.hawaii.utils.Canvas;
  *
  */
 public class DrawPlane implements Draw {
+	protected Canvas2 canvas;
+
 	/**
 	 * initializer method
 	 */
 	@Override
 	public void init() {
+		canvas = new Canvas2(Env.drawVisible);
 		initColor();
 		// displayWidth = mapWidth * cellWidth + displayMargin * 2;
 		displayWidth = mapWidth * cellWidth * 2 + displayMargin * 3;
 		displayHeight = mapHeight * cellHeight + displayMargin * 2;
-		Canvas.setTitle(Env.titleBar);
-		Canvas.show(displayWidth, displayHeight);
-		Canvas.disableAutoRepaint();
+		canvas.setTitle(Env.titleBar);
+		canvas.show(displayWidth, displayHeight);
+		canvas.disableAutoRepaint();
 		if(Env.animationGIFFileName != null) {
 			String fileName = Env.animationGIFFileName;
 			if(!fileName.endsWith(".gif")) {
@@ -39,7 +42,7 @@ public class DrawPlane implements Draw {
 				fileName = fileName + sdf.format(cal.getTime()) + ".gif";
 			}
 
-			Canvas.prepareAnimationGIF(fileName);
+			canvas.prepareAnimationGIF(fileName);
 		}
 	}
 
@@ -124,8 +127,8 @@ public class DrawPlane implements Draw {
 	 * @param rgb color
 	 */
 	protected void drawMap(int left, int top, int x, int y, int[] rgb) {
-		Canvas.setColor(rgb[0], rgb[1], rgb[2]);
-		Canvas.fillRect(left + x * cellWidth + displayMargin,
+		canvas.setColor(rgb[0], rgb[1], rgb[2]);
+		canvas.fillRect(left + x * cellWidth + displayMargin,
 				top + y * cellHeight + displayMargin, cellWidth, cellHeight);
 	}
 
@@ -156,10 +159,10 @@ public class DrawPlane implements Draw {
 					int y2 = fy * cellHeight + heightBias;
 					int x1 = (x0 + x2 * 4) / 5;
 					int y1 = (y0 + y2 * 4) / 5;
-					Canvas.setColor(rgb[0], rgb[1], rgb[2]);
-					Canvas.drawLine(x0, y0, x1, y1);
-					Canvas.setColor(200, 200, 0);
-					Canvas.drawLine(x1, y1, x2, y2);
+					canvas.setColor(rgb[0], rgb[1], rgb[2]);
+					canvas.drawLine(x0, y0, x1, y1);
+					canvas.setColor(200, 200, 0);
+					canvas.drawLine(x1, y1, x2, y2);
 				}
 			}
 		}
@@ -195,10 +198,10 @@ public class DrawPlane implements Draw {
 					int y2 = fy * cellHeight + heightBias;
 					int x1 = (x0 + x2 * 4) / 5;
 					int y1 = (y0 + y2 * 4) / 5;
-					Canvas.setColor(rgb[0], rgb[1], rgb[2]);
-					Canvas.drawLine(x0, y0, x1, y1);
-					Canvas.setColor(200, 200, 0);
-					Canvas.drawLine(x1, y1, x2, y2);
+					canvas.setColor(rgb[0], rgb[1], rgb[2]);
+					canvas.drawLine(x0, y0, x1, y1);
+					canvas.setColor(200, 200, 0);
+					canvas.drawLine(x1, y1, x2, y2);
 				}
 			}
 		}
@@ -221,8 +224,8 @@ public class DrawPlane implements Draw {
 			blue = (distance - half) * 255 / (max - half);
 		}
 
-		Canvas.setColor(red, green, blue);
-		Canvas.fillRect(left + actor.getX() * cellWidth + displayMargin,
+		canvas.setColor(red, green, blue);
+		canvas.fillRect(left + actor.getX() * cellWidth + displayMargin,
 				top + actor.getY() * cellHeight + displayMargin, cellWidth, cellHeight);
 	}
 
@@ -323,7 +326,7 @@ public class DrawPlane implements Draw {
 
 		System.out.println();
 
-		Canvas.forceRepaint();
+		canvas.forceRepaint();
 	}
 
 	/**
@@ -407,8 +410,8 @@ public class DrawPlane implements Draw {
 			int num = done.size();
 
 			if(num > 127) num = 127;
-			Canvas.setColor((127 - num) * 2, 0, num * 2);
-			Canvas.fillRect(left + origin.getX() * cellWidth + displayMargin,
+			canvas.setColor((127 - num) * 2, 0, num * 2);
+			canvas.fillRect(left + origin.getX() * cellWidth + displayMargin,
 					top + origin.getY() * cellHeight + displayMargin, cellWidth, cellHeight);
 		}
 	}
@@ -441,10 +444,10 @@ public class DrawPlane implements Draw {
 						int y2 = fy * cellHeight + heightBias;
 						// int x1 = (x0 + x2 * 4) / 5;
 						// int y1 = (y0 + y2 * 4) / 5;
-						Canvas.setColor(rgb[0], rgb[1], rgb[2]);
-						Canvas.drawLine(x0, y0, x2, y2);
-						// Canvas.setColor(200, 200, 0);
-						// Canvas.drawLine(x1, y1, x2, y2);
+						canvas.setColor(rgb[0], rgb[1], rgb[2]);
+						canvas.drawLine(x0, y0, x2, y2);
+						// canvas.setColor(200, 200, 0);
+						// canvas.drawLine(x1, y1, x2, y2);
 					}
 				}
 			}
@@ -476,17 +479,17 @@ public class DrawPlane implements Draw {
 				if(lx >=0 && ly >= 0) {
 
 					if(i == 0) {
-						Canvas.setColor(0, 0, 255);
+						canvas.setColor(0, 0, 255);
 					} else if(i == 1) {
-						Canvas.setColor(255, 0, 0);
+						canvas.setColor(255, 0, 0);
 					} else {
-						Canvas.setColor(0, 255, 0);
+						canvas.setColor(0, 255, 0);
 					}
 
 					int x0 = left + lx * cellWidth + cellWidthHalf;
 					int y0 = ly * cellHeight + heightBias;
 
-					Canvas.drawRect(x0, y0, cellWidth, cellHeight);
+					canvas.drawRect(x0, y0, cellWidth, cellHeight);
 				}
 			}
 		}
@@ -518,8 +521,8 @@ public class DrawPlane implements Draw {
 			blue = 255;
 		}
 
-		Canvas.setColor(red, green, blue);
-		Canvas.fillRect(left + x * cellWidth + displayMargin,
+		canvas.setColor(red, green, blue);
+		canvas.fillRect(left + x * cellWidth + displayMargin,
 				top + y * cellHeight + displayMargin, cellWidth, cellHeight);
 	}
 
@@ -528,8 +531,8 @@ public class DrawPlane implements Draw {
 	 */
 	@Override
 	public void draw() {
-		Canvas.setColor(255, 255, 255);
-		Canvas.fillRect(0, 0, displayWidth, displayHeight);
+		canvas.setColor(255, 255, 255);
+		canvas.fillRect(0, 0, displayWidth, displayHeight);
 
 		int left = mapWidth * cellWidth + displayMargin * 2;
 
@@ -548,6 +551,10 @@ public class DrawPlane implements Draw {
 			drawLinks(actor, left, 0, x, y, rgb);
 		}
 
-		Canvas.forceRepaint();
+		canvas.forceRepaint();
+	}
+
+	public Canvas2 getCanvas() {
+		return canvas;
 	}
 }

@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Properties;
 
 import edu.hawaii.sdlogic.Env;
@@ -249,7 +251,14 @@ public class PropertyManager {
 		if(Env.printFileName != null) {
 			try {
 				String name = Env.printFileName;
-				PrintStream ps = new PrintStream(new FileOutputStream(new File(Env.printFileName)));
+
+				if(!name.endsWith(".txt")) {
+					Calendar cal = Calendar.getInstance();
+					SimpleDateFormat sdf = new SimpleDateFormat("_yyyyMMdd_HHmmss");
+					name = name + sdf.format(cal.getTime()) + ".txt";
+				}
+
+				PrintStream ps = new PrintStream(new FileOutputStream(new File(name)));
 				Print.out = ps;
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();

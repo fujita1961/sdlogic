@@ -2,6 +2,7 @@ package edu.hawaii.sdlogic.utils;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -350,7 +351,7 @@ public class Print {
 		}
 		*/
 
-		aList.sort(new Comparator<Actor>() {
+		Collections.sort(aList, new Comparator<Actor>() {
 
 			@Override
 			public int compare(Actor arg0, Actor arg1) {
@@ -409,19 +410,48 @@ public class Print {
 	}
 
 	public static void printLiveCondition() {
-		double sum = 0;
-		double sum2 = 0;
+		double[] sum = new double[Env.roleNames.length + 1];
+		double[] sum2 = new double[Env.roleNames.length + 1];
+		int[] population = new int[Env.roleNames.length + 1];
 
 		for(Actor actor: Env.actorList) {
-			double live = actor.getLiveCondition();
-			sum += live;
-			sum2 += live * live;
+			boolean found = false;
+			for(int i = 0; i < Env.roleNames.length; i++) {
+				OperantResource ort = actor.getOperantResource(Env.roleNames[i]);
+				if(ort.getEffort() > 0.5) {
+					population[i]++;
+					found = true;
+					double live = actor.getLiveCondition();
+					sum[i] += live;
+					sum2[i] += live * live;
+					break;
+				}
+			}
+			if(!found) {
+				population[Env.roleNames.length]++;
+				double live = actor.getLiveCondition();
+				sum[Env.roleNames.length] += live;
+				sum2[Env.roleNames.length] += live * live;
+			}
 		}
 
-		double ave = sum / Env.actorList.size();
-		double sigma = Math.sqrt(sum2 / Env.actorList.size() - ave * ave);
+		double totalSum = 0;
+		double totalSum2 = 0;
 
-		out.printf("%6.4f %6.4f", ave, sigma);
+		for(int i = 0; i < Env.roleNames.length + 1; i++) {
+			totalSum += sum[i];
+			totalSum2 += sum2[i];
+		}
+
+		double ave = totalSum / Env.actorList.size();
+		double sigma = Math.sqrt(totalSum2 / Env.actorList.size() - ave * ave);
+
+		out.printf("%d %6.4f %6.4f ", Env.actorList.size(), ave, sigma);
+
+		for(int i = 0; i < Env.roleNames.length + 1; i++) {
+			ave = sum[i] / population[i];
+			sigma = Math.sqrt(sum2[i] / population[i] - ave * ave);
+			out.printf("%d %6.4f %6.4f ", population[i], ave, sigma);
+		}
 	}
-
 }

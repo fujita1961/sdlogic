@@ -10,7 +10,7 @@ import edu.hawaii.sdlogic.Env;
 import edu.hawaii.sdlogic.eval.SDLogicEvaluation;
 import edu.hawaii.sdlogic.initializer.Initializer;
 import edu.hawaii.sdlogic.operant.OperantResource;
-import edu.hawaii.utils.Canvas;
+import edu.hawaii.utils.Canvas2;
 
 public class Loop {
 	private static int longevity = 0;
@@ -282,8 +282,9 @@ public class Loop {
 	 * @return false if all actors die at the middle stage of the loop
 	 */
 	public static boolean loop() {
-		int prevX = Canvas.getPointedX();
-		int prevY = Canvas.getPointedY();
+		Canvas2 canvas = Env.draw.getCanvas();
+		int prevX = canvas.getPointedX();
+		int prevY = canvas.getPointedY();
 
 		int places;
 		int[][] xy;
@@ -331,8 +332,8 @@ public class Loop {
 			*/
 
 			// Click mouse if you want to pend loop execution.
-			int x = Canvas.getPointedX();
-			int y = Canvas.getPointedY();
+			int x = canvas.getPointedX();
+			int y = canvas.getPointedY();
 
 			if(x != prevX || y != prevY) {
 
@@ -343,9 +344,9 @@ public class Loop {
 				Print.printActor(x, y);
 
 				// wait for click
-				Canvas.waitForPoint();
-				x = Canvas.getPointedX();
-				y = Canvas.getPointedY();
+				canvas.waitForPoint();
+				x = canvas.getPointedX();
+				y = canvas.getPointedY();
 
 				Print.printActor(x, y);
 
@@ -546,7 +547,7 @@ public class Loop {
 			}
 
 			if((turn + 1) % Env.animationGIFInterval == 0) {
-				Canvas.writeAnimationGIF();
+				canvas.writeAnimationGIF();
 			}
 
 			if(Env.DEBUG) {
@@ -763,7 +764,7 @@ public class Loop {
 
 	public static void fin() {
 		if(Env.animationGIFFileName != null) {
-			Canvas.finishAnimationGIF();
+			Env.draw.getCanvas().finishAnimationGIF();
 		}
 	}
 

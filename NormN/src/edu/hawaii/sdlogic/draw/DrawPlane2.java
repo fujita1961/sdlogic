@@ -7,7 +7,7 @@ import java.util.Calendar;
 
 import edu.hawaii.sdlogic.Actor;
 import edu.hawaii.sdlogic.Env;
-import edu.hawaii.utils.Canvas;
+import edu.hawaii.utils.Canvas2;
 
 /**
  * draw actor map
@@ -20,13 +20,14 @@ public class DrawPlane2 extends DrawPlane {
 	 */
 	@Override
 	public void init() {
+		canvas = new Canvas2(Env.drawVisible);
 		initColor();
 		displayWidth = mapWidth * cellWidth + displayMargin * 2;
 		// displayWidth = mapWidth * cellWidth * 2 + displayMargin * 3;
 		displayHeight = mapHeight * cellHeight + displayMargin * 2;
-		Canvas.setTitle(Env.titleBar);
-		Canvas.show(displayWidth, displayHeight);
-		Canvas.disableAutoRepaint();
+		canvas.setTitle(Env.titleBar);
+		canvas.show(displayWidth, displayHeight);
+		canvas.disableAutoRepaint();
 		if(Env.animationGIFFileName != null) {
 			String fileName = Env.animationGIFFileName;
 			if(!fileName.endsWith(".gif")) {
@@ -35,7 +36,7 @@ public class DrawPlane2 extends DrawPlane {
 				fileName = fileName + sdf.format(cal.getTime()) + ".gif";
 			}
 
-			Canvas.prepareAnimationGIF(fileName);
+			canvas.prepareAnimationGIF(fileName);
 		}
 	}
 
@@ -45,8 +46,8 @@ public class DrawPlane2 extends DrawPlane {
 	 */
 	@Override
 	public void draw() {
-		Canvas.setColor(255, 255, 255);
-		Canvas.fillRect(0, 0, displayWidth, displayHeight);
+		canvas.setColor(255, 255, 255);
+		canvas.fillRect(0, 0, displayWidth, displayHeight);
 
 		// int left = mapWidth * cellWidth + displayMargin * 2;
 
@@ -65,6 +66,6 @@ public class DrawPlane2 extends DrawPlane {
 			// drawLinks(actor, left, 0, x, y, rgb);
 		}
 
-		Canvas.forceRepaint();
+		canvas.forceRepaint();
 	}
 }

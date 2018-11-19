@@ -216,7 +216,7 @@ public class Entropy {
 		double val = sum / Math.log(2);
 		double value = (val / (Env.mapWidth * Env.mapHeight));
 
-		System.out.print(value + " ");
+		Print.out.print(value + " ");
 
 		return value;
 	}
@@ -233,7 +233,7 @@ public class Entropy {
 		double val = sum / Math.log(2);
 
 		// 2018/01/30 changed
-		System.out.print(val / Env.actorList.size() + " ");
+		Print.out.print(val / Env.actorList.size() + " ");
 
 		return val;
 	}
@@ -281,7 +281,7 @@ public class Entropy {
 		double emptyP = 1 - ((double)actors) / (Env.mapWidth * Env.mapHeight);
 		double max = maxEntropy(9, types, emptyP);
 
-		System.out.print(actors + " " + max + " ");
+		Print.out.print(actors + " " + max + " ");
 
 		return max;
 	}
